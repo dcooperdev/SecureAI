@@ -184,13 +184,19 @@ def run_security_flow():
     3.  **Advertencia Crítica** (Solo si hay Severidad HIGH):
         - Usa una alerta roja/negrita. Explica el riesgo inminente.
         
-    4.  **Análisis de Impacto de Negocio**:
+    4.  **Análisis de Procesos y Amenazas**:
+        - Revisa 'sensor_procesos' para identificar ejecutables sospechosos.
+        - **ALERTA** si ves procesos corriendo desde 'Temp', 'AppData', 'Downloads' o rutas de usuario escuchando en puertos críticos.
+        - **ALERTA** si ves nombres de sistema (svchost, lsass) en rutas no estándar.
+        - Correlaciona puertos abiertos con los procesos que los ocupan.
+        
+    5.  **Análisis de Impacto de Negocio**:
         - Financiero, Operativo, Reputacional.
         
-    5.  **Plan de Acción Técnico**:
+    6.  **Plan de Acción Técnico**:
         - Pasos de remediación.
         
-    6.  **Detalle de Hallazgos**:
+    7.  **Detalle de Hallazgos**:
         - Tabla o lista.
     """
     
