@@ -1,0 +1,8 @@
+{
+  "timestamp": "1768951105",
+  "score": 60,
+  "findings": [
+    "net_scanner: [{'ip': '[IP]', 'mac': '78-d4-f1-7f-2a-00'}, {'ip': '[IP]', 'mac': 'ff-ff-ff-ff-ff-ff'}, {'ip': '[IP]', 'mac': '01-00-5e-00-00-02'}, {'ip': '[IP]', 'mac': '01-00-5e-00-00-16'}, {'ip': '[IP]', 'mac': '01-00-5e-00-00-fb'}, {'ip': '[IP]', 'mac': '01-00-5e-00-00-fc'}, {'ip': '[IP]', 'mac': '01-00-5e-7f-ff-fa'}, {'ip': '[IP]', 'mac': 'ff-ff-ff-ff-ff-ff'}]",
+    "sensor_vulnerabilidades: [445, 5432]"
+  ]
+}
