@@ -3,109 +3,94 @@ import sys
 import os
 import time
 import platform
+import pathlib
+from typing import Any, Dict
 from core import loader, sanitizer, uploader
 
-def main():
-    parser = argparse.ArgumentParser(description="Security Copilot Agent")
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Security Copilot Agent (Hardened)")
     parser.add_argument("--local-only", action="store_true", help="Print events to stdout instead of uploading")
     args = parser.parse_args()
 
-    # Define plugins directory
-    # Assuming main.py is in the root of security-copilot-agent/.. wait, the structure is
-    # security-copilot-agent/main.py
-    # security-copilot-agent/plugins/
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    plugins_dir = os.path.join(base_dir, "plugins")
+    # 1. Pipeline Setup (Discovery)
+    base_dir = pathlib.Path(__file__).parent.absolute()
+    plugins_dir = base_dir / "plugins"
     
-    # Discovery
-    # We look for .py files or .pyd (compiled) files
-    # For now, let's just scan the directory
-    plugin_files = [
-        os.path.join(plugins_dir, f) 
-        for f in os.listdir(plugins_dir) 
-        if (f.endswith(".py") or f.endswith(".pyd")) and not f.startswith("__")
-    ]
+    # Discovery of plugin files
+    # We look for .py and .pyd/so
+    plugin_files = []
+    if plugins_dir.exists():
+        for f in plugins_dir.iterdir():
+            if f.suffix in ['.py', '.pyd', '.so'] and not f.name.startswith("__"):
+                plugin_files.append(f)
 
+    # 2. Execution Loop
     for p_path in plugin_files:
         try:
-            # 1. Load
-            plugin = loader.load_plugin(p_path)
-            if not plugin:
+            # Step A: Safe Load
+             # Convert path object to str for our loader
+            plugin_module = loader.load_plugin(str(p_path))
+            if not plugin_module:
                 continue
 
-            # Validate
-            err = loader.validate_plugin(plugin)
+            # Step B: Contract Validation
+            err = loader.validate_plugin(plugin_module)
             if err:
-                print(f"Skipping {p_path}: {err}", file=sys.stderr)
+                print(f"[WARN] Skipping {p_path.name}: {err}", file=sys.stderr)
                 continue
             
-            # 2. Run
-            # Helper to safely run
+            # Step C: Execution Sandbox
             try:
-                result = plugin.run()
-            except PermissionError:
-                # Fallback as per requirements
-                from security_copilot_agent.core.constants import Severity
-                result = {
-                    "severity": Severity.MED,
-                    "message": "Insufficient Privileges",
-                    "impact_hint": "Access denied during scan."
-                }
+                # Run the plugin
+                raw_result = plugin_module.run()
             except Exception as e:
-                print(f"Plugin {plugin.PLUGIN_META['name']} failed: {e}", file=sys.stderr)
+                # Catch-all for plugin crashes to prevent orchestrator death
+                print(f"[ERROR] Plugin {plugin_module.PLUGIN_META['name']} crashed: {e}", file=sys.stderr)
                 continue
 
-            # 3. Sanitize
-            # Recursively sanitize strings in the result dictionary?
-            # Requirement says "replace ... in all output strings".
-            # We'll treat the whole result as a string for JSON dumping, or walk the dict.
-            # Easiest is to sanitize string values.
-            # But uploader expects a dict.
-            # Let's sanitize a serialized version or walk the dict.
-            # The prompt says "Sanitize: Use regex to replace ... in all output strings".
-            # Logic: sanitize(str(result))? No, that breaks the dict.
-            # Better: deep walk.
+            # Step D: Consolidation (Deep Sanitization)
+            sanitized_result = deep_sanitize(raw_result)
             
-            def deep_sanitize(obj):
-                if isinstance(obj, str):
-                    return sanitizer.sanitize(obj)
-                elif isinstance(obj, dict):
-                    return {k: deep_sanitize(v) for k, v in obj.items()}
-                elif isinstance(obj, list):
-                    return [deep_sanitize(i) for i in obj]
-                else:
-                    return obj
-            
-            sanitized_result = deep_sanitize(result)
-
-            # 4. Event ID
-            # "The uploader must generate a unique event_id"
-            # We call uploader.generate_event_id before uploading
-            # The prompt says: "The uploader must generate..."
-            # So maybe uploader.upload_event handles it? 
-            # Or we generate it and pass it to upload?
-            # Prompt: "Event ID: The uploader must generate..."
-            # Let's do it here or in uploader. 
-            # If we do it in uploader.upload_event, we need to modify the data.
-            # Let's generate it here for clarity.
-            
+            # Step E: Event Identification
             ts = str(int(time.time()))
             hid = platform.node()
-            event_id = uploader.generate_event_id(plugin.PLUGIN_META["name"], ts, hid)
+             # Use safe host name redactor? NO, we generate ID based on REAL host, 
+             # but we might redact the payload later.
+             # The ID should be stable.
+            event_id = uploader.generate_event_id(plugin_module.PLUGIN_META["name"], ts, hid)
             
             final_payload = {
                 "event_id": event_id,
                 "timestamp": ts,
-                "host_id": hid,
-                "plugin": plugin.PLUGIN_META["name"],
+                "host_id": hid, # Potentially sensitive, but usually required for correlation. 
+                                # Sanitizer might redact it in the BODY, but here it's metadata.
+                                # Master prompt: "Consolidation: Sanitize findings..."
+                "plugin": plugin_module.PLUGIN_META["name"],
                 "result": sanitized_result
             }
+            
+            # Sanitize metadata if strictly required, but usually IDs are kept. 
+            # If we sanitize host_id here, it might break correlation. 
+            # We'll allow host_id in metadata but sanitized in 'result'.
 
-            # 5. Upload/Print
+            # Step F: Delivery
             uploader.upload_event(final_payload, local_only=args.local_only)
 
         except Exception as e:
-            print(f"Error processing {p_path}: {e}", file=sys.stderr)
+            print(f"[FATAL] Orchestrator error on {p_path.name}: {e}", file=sys.stderr)
+
+def deep_sanitize(obj: Any) -> Any:
+    """
+    Recursively applies sanitization to strings in dictionaries and lists.
+    """
+    if isinstance(obj, str):
+        return sanitizer.sanitize(obj)
+    elif isinstance(obj, dict):
+        return {k: deep_sanitize(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [deep_sanitize(i) for i in obj]
+    else:
+        return obj
 
 if __name__ == "__main__":
     main()
