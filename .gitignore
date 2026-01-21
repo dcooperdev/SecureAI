@@ -1,0 +1,9 @@
+.env
+.env.example
+
+# Virtual environment
+.venv/
+__pycache__
+
+# Logs
+logs

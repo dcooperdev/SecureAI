@@ -1,9 +1,200 @@
 {
-  "timestamp": "1768952710",
+  "timestamp": "1768953588",
   "score": 45,
   "findings": [
-    "sensor_procesos: [{'port': 445, 'service': 'SMB', 'status': 'LISTEN', 'process': {'name': 'System', 'pid': 4, 'username': 'NT AUTHORITY\\\\SYSTEM', 'status': 'running', 'exe': ''}, 'remote_ip': None}, {'port': 139, 'service': 'NetBIOS', 'status': 'LISTEN', 'process': {'name': 'System', 'pid': 4, 'username': 'NT AUTHORITY\\\\SYSTEM', 'status': 'running', 'exe': ''}, 'remote_ip': None}, {'port': 445, 'service': 'SMB', 'status': 'LISTEN', 'process': {'name': 'System', 'pid': 4, 'username': 'NT AUTHORITY\\\\SYSTEM', 'status': 'running', 'exe': ''}, 'remote_ip': None}]",
-    "net_scanner: [{'ip': '[IP]', 'mac': '78-d4-f1-7f-2a-00'}, {'ip': '[IP]', 'mac': 'ff-ff-ff-ff-ff-ff'}, {'ip': '[IP]', 'mac': '01-00-5e-00-00-02'}, {'ip': '[IP]', 'mac': '01-00-5e-00-00-16'}, {'ip': '[IP]', 'mac': '01-00-5e-00-00-fb'}, {'ip': '[IP]', 'mac': '01-00-5e-00-00-fc'}, {'ip': '[IP]', 'mac': '01-00-5e-7f-ff-fa'}, {'ip': '[IP]', 'mac': 'ff-ff-ff-ff-ff-ff'}]",
-    "sensor_vulnerabilidades: [445, 5432]"
+    {
+      "event_id": "19d659d02bd9663c82fc5bf2ef84a42f904cefab265dc21e2c9157717118cb8b",
+      "timestamp": "1768953550",
+      "plugin": "sensor_procesos",
+      "result": {
+        "severity": "MEDIUM",
+        "data": [
+          {
+            "port": 445,
+            "service": "SMB",
+            "status": "LISTEN",
+            "process": {
+              "name": "System",
+              "pid": 4,
+              "username": "NT AUTHORITY\\SYSTEM",
+              "status": "running",
+              "exe": ""
+            },
+            "remote_ip": null
+          },
+          {
+            "port": 135,
+            "service": "RPC",
+            "status": "LISTEN",
+            "process": {
+              "name": "svchost.exe",
+              "pid": 1220,
+              "username": "SYSTEM/Protected",
+              "status": "running",
+              "exe": "AccessDenied"
+            },
+            "remote_ip": null
+          },
+          {
+            "port": 445,
+            "service": "SMB",
+            "status": "LISTEN",
+            "process": {
+              "name": "System",
+              "pid": 4,
+              "username": "NT AUTHORITY\\SYSTEM",
+              "status": "running",
+              "exe": ""
+            },
+            "remote_ip": null
+          },
+          {
+            "port": 5432,
+            "service": "PostgreSQL",
+            "status": "LISTEN",
+            "process": {
+              "name": "postgres.exe",
+              "pid": 7056,
+              "username": "SYSTEM/Protected",
+              "status": "running",
+              "exe": "AccessDenied"
+            },
+            "remote_ip": null
+          },
+          {
+            "port": 139,
+            "service": "NetBIOS",
+            "status": "LISTEN",
+            "process": {
+              "name": "System",
+              "pid": 4,
+              "username": "NT AUTHORITY\\SYSTEM",
+              "status": "running",
+              "exe": ""
+            },
+            "remote_ip": null
+          },
+          {
+            "port": 5432,
+            "service": "PostgreSQL",
+            "status": "LISTEN",
+            "process": {
+              "name": "postgres.exe",
+              "pid": 7056,
+              "username": "SYSTEM/Protected",
+              "status": "running",
+              "exe": "AccessDenied"
+            },
+            "remote_ip": null
+          },
+          {
+            "port": 135,
+            "service": "RPC",
+            "status": "LISTEN",
+            "process": {
+              "name": "svchost.exe",
+              "pid": 1220,
+              "username": "SYSTEM/Protected",
+              "status": "running",
+              "exe": "AccessDenied"
+            },
+            "remote_ip": null
+          }
+        ],
+        "impact_hint": "Verified 7 processes on critical ports."
+      }
+    },
+    {
+      "event_id": "c0eb91bab5f389771dc9a6878d1514901fe992d7f677191bc8a1e738f0aba339",
+      "timestamp": "1768953551",
+      "host_id": "PC-DAVID",
+      "plugin": "net_scanner",
+      "result": {
+        "severity": "info",
+        "impact_hint": "Discovered 8 devices on local network.",
+        "data": [
+          {
+            "ip": "[IP]",
+            "mac": "78-d4-f1-7f-2a-00"
+          },
+          {
+            "ip": "[IP]",
+            "mac": "ff-ff-ff-ff-ff-ff"
+          },
+          {
+            "ip": "[IP]",
+            "mac": "01-00-5e-00-00-02"
+          },
+          {
+            "ip": "[IP]",
+            "mac": "01-00-5e-00-00-16"
+          },
+          {
+            "ip": "[IP]",
+            "mac": "01-00-5e-00-00-fb"
+          },
+          {
+            "ip": "[IP]",
+            "mac": "01-00-5e-00-00-fc"
+          },
+          {
+            "ip": "[IP]",
+            "mac": "01-00-5e-7f-ff-fa"
+          },
+          {
+            "ip": "[IP]",
+            "mac": "ff-ff-ff-ff-ff-ff"
+          }
+        ]
+      }
+    },
+    {
+      "event_id": "07c69a9654b42b774d9369f00ff45d28eac559be648472de8dd804a8cdbbad2f",
+      "timestamp": "1768953551",
+      "host_id": "PC-DAVID",
+      "plugin": "system_scanner",
+      "result": {
+        "severity": "Severity.LOW",
+        "impact_hint": "Basic system information for inventory.",
+        "data": {
+          "os": "Windows",
+          "release": "10",
+          "user_home": "C:\\Users\\[USER]"
+        }
+      }
+    },
+    {
+      "event_id": "67b1653a7eae67d31c6e84a85f009c47e856ae993b84ad6fcc73ee6dc4808f4b",
+      "timestamp": "1768953551",
+      "plugin": "sensor_sistema",
+      "result": {
+        "severity": "INFO",
+        "data": {
+          "os": "Windows",
+          "release": "10",
+          "version": "10.0.19045",
+          "architecture": "AMD64",
+          "hostname": "PC-DAVID",
+          "active_users": [
+            "DeusEx"
+          ],
+          "processor": "Intel64 Family 6 Model 165 Stepping 5, GenuineIntel"
+        },
+        "impact_hint": "Inventory of host system details."
+      }
+    },
+    {
+      "event_id": "81dffbb0ef19c3126dc510771fade1a94c67a0fa0821c52566b36971c8d55dac",
+      "timestamp": "1768953555",
+      "plugin": "sensor_vulnerabilidades",
+      "result": {
+        "severity": "HIGH",
+        "data": [
+          445,
+          5432
+        ],
+        "impact_hint": "Open ports detected: [445, 5432]. CRITICAL: Remote Access (RDP/VNC) or SMB ports detected open locally. High Ransomware Risk."
+      }
+    }
   ]
 }
