@@ -126,6 +126,9 @@ def main():
     active_processes = []
     netstat_lookup = None # Lazy load
     
+    # PIDs to watch for external traffic (will populate during first pass)
+    target_pids = set()
+    
     try:
         # Get all network connections via psutil first
         connections = psutil.net_connections(kind='inet')
@@ -134,10 +137,12 @@ def main():
         # So let's build a set of found ports
         found_ports = set()
         
+        # First Pass: Listeners
         for conn in connections:
             if conn.status == psutil.CONN_LISTEN or conn.status == psutil.CONN_ESTABLISHED:
                 local_port = conn.laddr.port
                 
+                # If it's a critical port, add to report
                 if local_port in CRITICAL_PORTS:
                     found_ports.add(local_port)
                     pid = conn.pid
@@ -146,6 +151,9 @@ def main():
                     if pid is None:
                         if netstat_lookup is None: netstat_lookup = get_netstat_map()
                         pid = netstat_lookup.get(local_port)
+                    
+                    if pid:
+                         target_pids.add(pid)
                     
                     proc_info = get_process_info(pid)
                     
@@ -166,6 +174,7 @@ def main():
         for port, pid in netstat_lookup.items():
             if port in CRITICAL_PORTS and port not in found_ports:
                 # We found a shadow listener!
+                if pid: target_pids.add(pid)
                 proc_info = get_process_info(pid)
                 if proc_info:
                     entry = {
@@ -177,6 +186,36 @@ def main():
                         "source": "netstat_deep_scan"
                     }
                     active_processes.append(entry)
+
+        # Second Pass: Established Connections from Target PIDs (Network Intelligence)
+        # We want to know if these critical processes are talking to the outside world.
+        # This catches C2 from a 'postgres.exe' or 'svchost.exe' that we identified earlier.
+        
+        # Define ranges to ignore (Local)
+        def is_external(ip):
+            if not ip: return False
+            if ip.startswith("127."): return False
+            if ip.startswith("10."): return False
+            if ip.startswith("192.168."): return False
+            if ip.startswith("172.") and 16 <= int(ip.split('.')[1]) <= 31: return False
+            if ip.startswith("169.254."): return False
+            return True
+
+        for conn in connections:
+            if conn.status == psutil.CONN_ESTABLISHED and conn.pid in target_pids:
+                 remote_ip = conn.raddr.ip if conn.raddr else None
+                 if remote_ip and is_external(remote_ip):
+                     # Captured C2 candidate?
+                     proc_info = get_process_info(conn.pid)
+                     if proc_info:
+                         entry = {
+                             "port": conn.laddr.port,
+                             "service": "OUTBOUND_TRAFFIC",
+                             "status": "ESTABLISHED (External)",
+                             "process": proc_info,
+                             "remote_ip": remote_ip
+                         }
+                         active_processes.append(entry)
 
     except Exception as e:
         pass

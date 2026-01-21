@@ -1,10 +1,54 @@
 {
-  "timestamp": "1768953588",
+  "timestamp": "1768963043",
   "score": 45,
   "findings": [
     {
-      "event_id": "19d659d02bd9663c82fc5bf2ef84a42f904cefab265dc21e2c9157717118cb8b",
-      "timestamp": "1768953550",
+      "event_id": "2920c54cdedb40ae2ca003e678e7e1c148bb38d9478c987d7d1bc8c894f23e3e",
+      "timestamp": "1768963004",
+      "plugin": "sensor_network_discovery",
+      "result": {
+        "severity": "INFO",
+        "data": [
+          {
+            "ip": "192.168.1.34",
+            "hostname": "PC-DAVID",
+            "open_ports": [
+              445,
+              5432,
+              139
+            ],
+            "status": "ONLINE"
+          },
+          {
+            "ip": "192.168.1.1",
+            "hostname": null,
+            "open_ports": [
+              22,
+              80,
+              443
+            ],
+            "status": "ONLINE"
+          },
+          {
+            "ip": "192.168.1.35",
+            "hostname": null,
+            "open_ports": [],
+            "status": "ONLINE"
+          },
+          {
+            "ip": "192.168.1.33",
+            "hostname": null,
+            "open_ports": [],
+            "status": "ONLINE"
+          }
+        ],
+        "impact_hint": "Discovered 4 active hosts in subnet 192.168.1.0/24. 1 neighbors exposing critical ports.",
+        "local_ip": "192.168.1.34"
+      }
+    },
+    {
+      "event_id": "569447396890505331cdb067748b5123478a6bfb6726a7ba58933de29211854f",
+      "timestamp": "1768963005",
       "plugin": "sensor_procesos",
       "result": {
         "severity": "MEDIUM",
@@ -23,6 +67,32 @@
             "remote_ip": null
           },
           {
+            "port": 139,
+            "service": "NetBIOS",
+            "status": "LISTEN",
+            "process": {
+              "name": "System",
+              "pid": 4,
+              "username": "NT AUTHORITY\\SYSTEM",
+              "status": "running",
+              "exe": ""
+            },
+            "remote_ip": null
+          },
+          {
+            "port": 135,
+            "service": "RPC",
+            "status": "LISTEN",
+            "process": {
+              "name": "svchost.exe",
+              "pid": 1220,
+              "username": "SYSTEM/Protected",
+              "status": "running",
+              "exe": "AccessDenied"
+            },
+            "remote_ip": null
+          },
+          {
             "port": 135,
             "service": "RPC",
             "status": "LISTEN",
@@ -62,19 +132,6 @@
             "remote_ip": null
           },
           {
-            "port": 139,
-            "service": "NetBIOS",
-            "status": "LISTEN",
-            "process": {
-              "name": "System",
-              "pid": 4,
-              "username": "NT AUTHORITY\\SYSTEM",
-              "status": "running",
-              "exe": ""
-            },
-            "remote_ip": null
-          },
-          {
             "port": 5432,
             "service": "PostgreSQL",
             "status": "LISTEN",
@@ -86,32 +143,19 @@
               "exe": "AccessDenied"
             },
             "remote_ip": null
-          },
-          {
-            "port": 135,
-            "service": "RPC",
-            "status": "LISTEN",
-            "process": {
-              "name": "svchost.exe",
-              "pid": 1220,
-              "username": "SYSTEM/Protected",
-              "status": "running",
-              "exe": "AccessDenied"
-            },
-            "remote_ip": null
           }
         ],
         "impact_hint": "Verified 7 processes on critical ports."
       }
     },
     {
-      "event_id": "c0eb91bab5f389771dc9a6878d1514901fe992d7f677191bc8a1e738f0aba339",
-      "timestamp": "1768953551",
+      "event_id": "2fd7c1b173706b88af2cd1a695935252f8603ef4e15d2cc2c93611c8e5d5e35e",
+      "timestamp": "1768963005",
       "host_id": "PC-DAVID",
       "plugin": "net_scanner",
       "result": {
         "severity": "info",
-        "impact_hint": "Discovered 8 devices on local network.",
+        "impact_hint": "Discovered 9 devices on local network.",
         "data": [
           {
             "ip": "[IP]",
@@ -119,7 +163,15 @@
           },
           {
             "ip": "[IP]",
-            "mac": "ff-ff-ff-ff-ff-ff"
+            "mac": "88-52-eb-77-cb-3e"
+          },
+          {
+            "ip": "[IP]",
+            "mac": "42-9c-34-a2-a3-6c"
+          },
+          {
+            "ip": "[IP]",
+            "mac": "b4-b7-42-a1-92-2a"
           },
           {
             "ip": "[IP]",
@@ -140,17 +192,13 @@
           {
             "ip": "[IP]",
             "mac": "01-00-5e-7f-ff-fa"
-          },
-          {
-            "ip": "[IP]",
-            "mac": "ff-ff-ff-ff-ff-ff"
           }
         ]
       }
     },
     {
-      "event_id": "07c69a9654b42b774d9369f00ff45d28eac559be648472de8dd804a8cdbbad2f",
-      "timestamp": "1768953551",
+      "event_id": "5b2c8f14360eae203e0c1001b77e21a4b3abc41d94650ee63e843aafee7cd15f",
+      "timestamp": "1768963005",
       "host_id": "PC-DAVID",
       "plugin": "system_scanner",
       "result": {
@@ -164,8 +212,8 @@
       }
     },
     {
-      "event_id": "67b1653a7eae67d31c6e84a85f009c47e856ae993b84ad6fcc73ee6dc4808f4b",
-      "timestamp": "1768953551",
+      "event_id": "8a4c484ad0cb6ca5f7127f32f4896767b191323f8f820bc54231713c5b20f813",
+      "timestamp": "1768963005",
       "plugin": "sensor_sistema",
       "result": {
         "severity": "INFO",
@@ -184,8 +232,8 @@
       }
     },
     {
-      "event_id": "81dffbb0ef19c3126dc510771fade1a94c67a0fa0821c52566b36971c8d55dac",
-      "timestamp": "1768953555",
+      "event_id": "f53206604334c1045ccfbc2839f1a2805da35eab808e93d3949d0e88b20c8d4c",
+      "timestamp": "1768963009",
       "plugin": "sensor_vulnerabilidades",
       "result": {
         "severity": "HIGH",

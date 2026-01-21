@@ -207,21 +207,32 @@ def run_security_flow():
         - USA EL PUNTAJE PROVISTO ({security_score}/100).
         
     3.  **Deep Network Scan & CVE Lookup**:
-        - Has recibido resultados de un escaneo profundo (netstat + psutil).
-        - Para cada servicio detectado en puertos críticos (especialmente 445, 3389, 5432, 80, 443):
-            - Busca en tu conocimiento vulnerabilidades (CVEs) conocidas para Windows 10.0.19045 relacionadas con esos servicios.
-            - Si detectas un proceso en puerto 5432 (PostgreSQL) o similar, verifica si la versión del SO tiene exploits conocidos que faciliten movimiento lateral via ese puerto.
-        - Alerta si hay PIDs detectados sin nombre de proceso (o recuperados vía fallback).
+        - Has recibido resultados de un escaneo profundo (netstat + psutil + discovery).
+        - **SISTEMAS ESPEJO (Mirror Systems)**: 
+            - Compara resultados de 'sensor_procesos' (local) con 'sensor_network_discovery' (remoto/vecinos).
+            - Si ves que el puerto X está abierto en ESTE equipo y TAMBIÉN en equipos vecinos, ALERTA sobre "Riesgo Sistémico".
+            - Ejemplo: "Veo que el puerto 5432 (PostgreSQL) está abierto en tu PC y también en otras 3 IPs de la red (192.168.1.X)."
+        - **Conexiones Externas (C2)**:
+            - Analiza IPs remotas en "ESTABLISHED (External)".
+            - Distingue entre IPs de nube (Google/Azure/AWS = Riesgo bajo si es browser, medio si es svchost) vs IPs desconocidas (Riesgo Alto/C2).
+        - **Vulnerabilidades**:
+            - Asocia puertos abiertos con CVEs conocidos para Windows 10.0.19045.
         
     4.  **Advertencia Crítica** (Solo si hay Severidad HIGH):
         - Usa una alerta roja/negrita. Explica el riesgo inminente.
         
-    5.  **Recomendaciones de Negocio**:
-        - Impacto financiero y operativo.
+    6.  **ACCIONES DE 5 MINUTOS (Quick Wins)**:
+        - ¡SECCIÓN OBLIGATORIA!
+        - Debes proporcionar un bloque de código EXACTO para remediar los hallazgos.
+        - FORMATO:
+          ```powershell
+          # Ejemplo: Bloquear puerto 445
+          New-NetFirewallRule -DisplayName "Block SMB" -Direction Inbound -LocalPort 445 -Protocol TCP -Action Block
+          ```
+        - Si detectas "Mirror Systems" (mismo puerto en varios equipos), el comando debe ser aislar el equipo: `Disconnect-NetAdapter -Name "Ethernet" -Confirm:$false` (sugerencia extrema).
         
-    6.  **Plan de Acción Técnico**:
-        - Remediar vulnerabilidades detectadas.
-        - Cerrar puertos innecesarios.
+    7.  **Plan de Acción Técnico (Largo Plazo)**:
+        - Remediar vulnerabilidades de fondo (parcheo, arquitectura).
     """
     
     try:
