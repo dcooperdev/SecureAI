@@ -3,74 +3,70 @@ import subprocess
 import os
 import json
 import sys
+from datetime import datetime
 
-# Force UTF-8 encoding for stdout on Windows to handle emojis
+# Force UTF-8 on Windows
 if sys.stdout.encoding.lower() != 'utf-8':
     try:
         sys.stdout.reconfigure(encoding='utf-8')
     except AttributeError:
         pass
-from datetime import datetime
 
 VAULT_FILE = "vault/security_state.json"
 
 def get_current_score():
-    if not os.path.exists(VAULT_FILE):
-        return None
+    if not os.path.exists(VAULT_FILE): return None
     try:
         with open(VAULT_FILE, "r") as f:
-            data = json.load(f)
-            return data.get("score")
-    except:
-        return None
+            return json.load(f).get("score")
+    except: return None
 
 def main():
-    print("👁️  GALT.AI SENTINEL: INICIANDO VIGILANCIA AUTÓNOMA")
-    print("--------------------------------------------------")
+    print("👁️  GALT.AI SENTINEL: VIGILANCIA ACTIVA")
+    print("--------------------------------------")
     
-    interval = 60 # 60 minutes
-    
-    # Check if testing mode
-    if "--test" in sys.argv:
-        interval = 5 
-        print("   [TEST MODE] Intervalo reducido a 5s.")
+    interval = 60 # Segundos
+    if "--test" in sys.argv: interval = 10
 
     try:
         while True:
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            print(f"\n⏰ [{timestamp}] Ejecutando orquestador de seguridad...")
+            timestamp = datetime.now().strftime("%H:%M:%S")
+            print(f"\n⏰ [{timestamp}] Escaneando perímetro...")
             
             score_before = get_current_score()
             
-            # Execute Runner
-            result = subprocess.run([sys.executable, "runner.py", "--auto"], capture_output=True, text=True, encoding='utf-8')
+            # EJECUCIÓN CON FLAG --auto (Modo Silencioso)
+            # Esto evita que se abra el navegador a menos que haya cambios
+            result = subprocess.run(
+                [sys.executable, "runner.py", "--auto"], 
+                capture_output=True, 
+                text=True, 
+                encoding='utf-8'
+            )
             
-            # Print Runner Output (filtered or full)
-            print(result.stdout)
-            if result.stderr:
-                print(f"ERROR LOG:\n{result.stderr}")
-                
+            # Mostrar salida resumida o logs de error
+            if result.returncode != 0:
+                print("❌ Error en Runner:")
+                print(result.stderr)
+            else:
+                # Filtrar salida para mostrar solo líneas clave
+                for line in result.stdout.splitlines():
+                    if "Score:" in line or "DRIFT" in line or "Modo Silencioso" in line:
+                        print(f"   > {line.strip()}")
+
             score_after = get_current_score()
             
-            # Comparative Logic (Green/Red)
+            # Notificaciones de Consola (Brindamos o Lloramos)
             if score_before is not None and score_after is not None:
                 if score_after > score_before:
-                    print(f"\n🟢 ¡MEJORA DETECTADA! La postura de seguridad ha subido de {score_before} a {score_after}.")
-                    print("   🥂 ¡Brindamos! Se han mitigado vulnerabilidades.")
+                    print(f"   🟢 MEJORA: {score_before} -> {score_after} 🥂")
                 elif score_after < score_before:
-                    print(f"\n🔴 ¡ALERTA DE RIESGO! La postura ha bajado de {score_before} a {score_after}.")
-                    print("   😭 ¡Lloramos! Nuevas amenazas detectadas.")
-                else:
-                    # If runner output contains "Postura estable", confirmed no change.
-                    pass
-            elif score_before is None and score_after is not None:
-                print(f"\n🔵 LÍNEA BASE ESTABLECIDA. Score inicial: {score_after}/100")
+                    print(f"   🔴 ALERTA: {score_before} -> {score_after} 😭")
             
-            print(f"💤 Durmiendo {interval} segundos...")
             time.sleep(interval)
             
     except KeyboardInterrupt:
-        print("\n👋 Sentinel detenido por el usuario.")
+        print("\n👋 Sentinel detenido.")
 
 if __name__ == "__main__":
     main()

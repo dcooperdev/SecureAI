@@ -1,10 +1,10 @@
 {
-  "timestamp": "1769043935",
+  "timestamp": "1769044139",
   "score": 45,
   "findings": [
     {
-      "event_id": "d8f0395ecc1cf8f2cb88abc6cd1526e0a9340e779848ba973c1c9bc9a47b783d",
-      "timestamp": "1769043893",
+      "event_id": "18df552fdefa934e92082367c57f183d0b63dc443dff67c8e82cc612e6674cc8",
+      "timestamp": "1769044108",
       "plugin": "sensor_network_discovery",
       "result": {
         "severity": "INFO",
@@ -41,8 +41,8 @@
       }
     },
     {
-      "event_id": "fed43f3ea4f56bf65a014e09d2aa13568d011e160929942c13394c4b3bff2d26",
-      "timestamp": "1769043894",
+      "event_id": "867dae18b7b24c5f4ef8cb941da85d07283c90881fa45e68da349beefafa8d85",
+      "timestamp": "1769044109",
       "plugin": "sensor_procesos",
       "result": {
         "severity": "MEDIUM",
@@ -61,19 +61,6 @@
             "remote_ip": null
           },
           {
-            "port": 135,
-            "service": "RPC",
-            "status": "LISTEN",
-            "process": {
-              "name": "svchost.exe",
-              "pid": 1220,
-              "username": "SYSTEM/Protected",
-              "status": "running",
-              "exe": "AccessDenied"
-            },
-            "remote_ip": null
-          },
-          {
             "port": 5432,
             "service": "PostgreSQL",
             "status": "LISTEN",
@@ -96,32 +83,6 @@
               "username": "SYSTEM/Protected",
               "status": "running",
               "exe": "AccessDenied"
-            },
-            "remote_ip": null
-          },
-          {
-            "port": 445,
-            "service": "SMB",
-            "status": "LISTEN",
-            "process": {
-              "name": "System",
-              "pid": 4,
-              "username": "NT AUTHORITY\\SYSTEM",
-              "status": "running",
-              "exe": ""
-            },
-            "remote_ip": null
-          },
-          {
-            "port": 445,
-            "service": "SMB",
-            "status": "LISTEN",
-            "process": {
-              "name": "System",
-              "pid": 4,
-              "username": "NT AUTHORITY\\SYSTEM",
-              "status": "running",
-              "exe": ""
             },
             "remote_ip": null
           },
@@ -137,14 +98,53 @@
               "exe": ""
             },
             "remote_ip": null
+          },
+          {
+            "port": 445,
+            "service": "SMB",
+            "status": "LISTEN",
+            "process": {
+              "name": "System",
+              "pid": 4,
+              "username": "NT AUTHORITY\\SYSTEM",
+              "status": "running",
+              "exe": ""
+            },
+            "remote_ip": null
+          },
+          {
+            "port": 135,
+            "service": "RPC",
+            "status": "LISTEN",
+            "process": {
+              "name": "svchost.exe",
+              "pid": 1220,
+              "username": "SYSTEM/Protected",
+              "status": "running",
+              "exe": "AccessDenied"
+            },
+            "remote_ip": null
+          },
+          {
+            "port": 445,
+            "service": "SMB",
+            "status": "LISTEN",
+            "process": {
+              "name": "System",
+              "pid": 4,
+              "username": "NT AUTHORITY\\SYSTEM",
+              "status": "running",
+              "exe": ""
+            },
+            "remote_ip": null
           }
         ],
         "impact_hint": "Verified 7 processes on critical ports."
       }
     },
     {
-      "event_id": "5fdaa2fc0105d2e7a53ff3f8d003681df63e67be1081687d69b1c0e85e99ed6e",
-      "timestamp": "1769043894",
+      "event_id": "89112c1e4be625298e33b69018f89a9260d53eb75e24d2b608d7300a65b06be6",
+      "timestamp": "1769044109",
       "host_id": "PC-DAVID",
       "plugin": "net_scanner",
       "result": {
@@ -195,8 +195,8 @@
       }
     },
     {
-      "event_id": "be49ded22197df0877b5121b78c50d40d582f9ff66eabaaee5075061f1bc1aa8",
-      "timestamp": "1769043894",
+      "event_id": "cae88f3451f3b212848ed5897e610c9061acacd602dad2016ac3236b88014c15",
+      "timestamp": "1769044109",
       "host_id": "PC-DAVID",
       "plugin": "system_scanner",
       "result": {
@@ -210,8 +210,8 @@
       }
     },
     {
-      "event_id": "d2090e32d745e2331044c13512d0e3507f951839a6fbfe240464407c3e93a5d5",
-      "timestamp": "1769043894",
+      "event_id": "55a6f93a30810efc316d76ea52f7e7e400546ccdaae023f00cc7d803c53fd6af",
+      "timestamp": "1769044109",
       "plugin": "sensor_sistema",
       "result": {
         "severity": "INFO",
@@ -230,8 +230,8 @@
       }
     },
     {
-      "event_id": "8860348e147e8d30cd60732e07029812aefe2c51053701ae76ff460faa0863d6",
-      "timestamp": "1769043898",
+      "event_id": "8e73215129765a96ae7253e0ffd579bfb4c9f6547fcd89cca14e3ee3aefe430f",
+      "timestamp": "1769044113",
       "plugin": "sensor_vulnerabilidades",
       "result": {
         "severity": "HIGH",
