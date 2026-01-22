@@ -318,8 +318,98 @@ def run_security_flow():
             print("\n⛔ QUOTA EXCEEDED (Error 429): La IA está saturada.")
             print("   ⏳ Por favor espera unos minutos antes de reintentar.")
             print(f"   Detalle técnico: {err_msg[:200]}...")
+            return # Exit if AI failed, but maybe we should still generate dashboard with partial data? NO, user wants AI report in dashboard.
         else:
             print(f"❌ Error desconocido en IA: {e}")
+            return
+
+    # --- USER TESTING: PAYLOAD & DASHBOARD ---
+    
+    # 1. Generate JSON Payload
+    payload = {
+        "client_id": "LOCAL_TEST",
+        "timestamp": datetime.now().isoformat(),
+        "score": security_score,
+        "findings": all_data,
+        "report_md": report_text
+    }
+    
+    with open("reports/latest_payload.json", "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2)
+    print("📦 Payload JSON generado: reports/latest_payload.json")
+
+    # 2. Generate HTML Dashboard
+    generate_html_report(security_score, report_text, "reports/latest_payload.json")
+    
+def generate_html_report(score, report_md, json_path):
+    # Color logic
+    color_class = "bg-success"
+    if score < 50: color_class = "bg-danger"
+    elif score < 80: color_class = "bg-warning"
+    
+    html_content = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galt.ai Security Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {{ background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }}
+        .navbar {{ background: #000; color: #fff; }}
+        .score-card {{ background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }}
+        .markdown-body {{ background: #fff; padding: 40px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
+        pre {{ background-color: #f6f8fa; padding: 15px; border-radius: 5px; }}
+        img {{ max-width: 100%; }}
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark mb-4">
+  <div class="container">
+    <span class="navbar-brand mb-0 h1">🛡️ Galt.ai | Security Dashboard</span>
+    <span class="text-light">{datetime.now().strftime('%Y-%m-%d %H:%M')}</span>
+  </div>
+</nav>
+
+<div class="container">
+    <div class="score-card text-center">
+        <h3>Security Score</h3>
+        <div class="display-4 fw-bold mb-3">{score}/100</div>
+        <div class="progress" style="height: 30px;">
+            <div class="progress-bar {color_class}" role="progressbar" style="width: {score}%" aria-valuenow="{score}" aria-valuemin="0" aria-valuemax="100">
+                {score}%
+            </div>
+        </div>
+        <div class="mt-3">
+            <a href="latest_payload.json" target="_blank" class="btn btn-outline-dark btn-sm">Ver JSON Crudo</a>
+        </div>
+    </div>
+
+    <div class="markdown-body" id="report-content">
+        <!-- Rendered Markdown will go here -->
+    </div>
+</div>
+
+<script>
+    const reportMd = {json.dumps(report_md)};
+    document.getElementById('report-content').innerHTML = marked.parse(reportMd);
+</script>
+
+</body>
+</html>"""
+
+    dashboard_path = os.path.abspath("reports/dashboard.html")
+    with open(dashboard_path, "w", encoding="utf-8") as f:
+        f.write(html_content)
+        
+    print(f"📊 Dashboard generado: {dashboard_path}")
+    
+    # Auto-Launch
+    import webbrowser
+    webbrowser.open(f"file://{dashboard_path}")
+    print("🚀 Dashboard abierto en navegador.")
 
 if __name__ == "__main__":
     run_security_flow()
