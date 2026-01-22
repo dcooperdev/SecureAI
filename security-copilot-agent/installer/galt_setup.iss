@@ -21,8 +21,8 @@ DefaultGroupName={#MyAppName}
 ; Requerir Admin para instalación y ejecución (Vital para ciberseguridad)
 PrivilegesRequired=admin
 ; Ruta de salida del instalador
-OutputDir=..\release
-OutputBaseFilename=GaltAI_Setup_Windows
+OutputDir=..\Output
+OutputBaseFilename=GaltAI_Setup_v3.0
 ; Icono del instalador (si tienes uno, sino comentar)
 ; SetupIconFile=..\app.ico
 Compression=lzma

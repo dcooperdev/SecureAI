@@ -1,0 +1,177 @@
+name: Galt.ai Universal Release Factory
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  # ==================================================================
+  # 1. WINDOWS BUILD
+  # ==================================================================
+  build-windows:
+    name: 🏗️ Build Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Compile EXE
+        run: python build_windows.py
+
+      - name: Compile Installer (Inno Setup)
+        uses: Minionguyjosh/inno-setup-action@v1.2.2
+        with:
+          path: installer/galt_setup.iss
+
+      - name: Upload Windows Setup
+        uses: actions/upload-artifact@v3
+        with:
+          name: GaltAI_Setup_Windows
+          path: Output/GaltAI_Setup_v3.0.exe
+
+  # ==================================================================
+  # 2. LINUX BUILD
+  # ==================================================================
+  build-linux:
+    name: 🐧 Build Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Compile Linux Binary
+        run: |
+          pyinstaller --onefile --name galt_linux --clean \
+            --add-data "sensor_procesos.py:." \
+            --add-data "sensor_red.py:." \
+            --add-data "sensor_sistema.py:." \
+            --add-data "sensor_vulnerabilidades.py:." \
+            --add-data "sensor_network_discovery.py:." \
+            --add-data "runner.py:." \
+            --add-data ".env.example:." \
+            sentinel.py
+
+      - name: Create Tarball
+        run: |
+          mkdir -p package
+          cp dist/galt_linux package/
+          cp install.sh package/
+          cp requirements.txt package/
+          cp .env.example package/
+          cd package
+          tar -czvf ../GaltAI_Linux.tar.gz *
+
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: GaltAI_Linux
+          path: GaltAI_Linux.tar.gz
+
+  # ==================================================================
+  # 3. MACOS BUILD
+  # ==================================================================
+  build-mac:
+    name: 🍎 Build MacOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Compile Mac Binary
+        run: |
+          pyinstaller --onefile --name galt_mac --clean \
+            --add-data "sensor_procesos.py:." \
+            --add-data "sensor_red.py:." \
+            --add-data "sensor_sistema.py:." \
+            --add-data "sensor_vulnerabilidades.py:." \
+            --add-data "sensor_network_discovery.py:." \
+            --add-data "runner.py:." \
+            --add-data ".env.example:." \
+            sentinel.py
+
+      - name: Create Zip
+        run: |
+          mkdir -p package_mac
+          cp dist/galt_mac package_mac/
+          cp install.sh package_mac/
+          cp requirements.txt package_mac/
+          cp .env.example package_mac/
+          cd package_mac
+          zip -r ../GaltAI_Mac.zip *
+
+      - name: Upload Mac Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: GaltAI_Mac
+          path: GaltAI_Mac.zip
+
+  # ==================================================================
+  # 4. PUBLISH RELEASE
+  # ==================================================================
+  release:
+    name: 🚀 Publish Release
+    needs: [build-windows, build-linux, build-mac]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: GaltAI_Setup_Windows
+          path: artifacts
+
+      - name: Download Linux Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: GaltAI_Linux
+          path: artifacts
+
+      - name: Download Mac Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: GaltAI_Mac
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/GaltAI_Setup_v3.0.exe
+            artifacts/GaltAI_Linux.tar.gz
+            artifacts/GaltAI_Mac.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
