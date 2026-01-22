@@ -3,3 +3,6 @@ pytest==7.4.0
 setuptools
 google-genai
 psutil
+requests
+python-dotenv
+pyinstaller
