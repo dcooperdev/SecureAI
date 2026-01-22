@@ -15,7 +15,55 @@ from google import genai
 from dotenv import load_dotenv
 
 load_dotenv()
-client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+
+def check_configuration():
+    """Verifica la configuración y asiste al usuario si falta la API Key."""
+    api_key = os.getenv("GOOGLE_API_KEY")
+    
+    # Check if missing or default value
+    if not api_key or api_key.strip() == "tu_api_key_secreta_aqui" or api_key.strip() == "":
+        
+        # Check if we are in an interactive terminal
+        if sys.stdin and sys.stdin.isatty():
+            print("\n" + "!"*60)
+            print("⚠️  CONFIGURACIÓN INICIAL REQUERIDA")
+            print("   Para operar, Galt.ai necesita acceder a Google Gemini API.")
+            print("   👉 Obtén tu llave gratis aquí: https://aistudio.google.com/")
+            print("!"*60 + "\n")
+            
+            try:
+                # Interactive prompt
+                key_input = input("🔑 Ingresa tu Google API Key (y presiona Enter): ").strip()
+                
+                if len(key_input) > 20: 
+                    with open(".env", "w", encoding="utf-8") as f:
+                        f.write("# --- Galt.ai Configuration ---\n")
+                        f.write(f"GOOGLE_API_KEY={key_input}\n")
+                        f.write("SCAN_INTERVAL_SECONDS=3600\n")
+                        f.write("LOG_LEVEL=INFO\n")
+                    
+                    print("\n✅ API Key guardada exitosamente en .env")
+                    os.environ["GOOGLE_API_KEY"] = key_input
+                    return key_input
+                else:
+                    print("\n❌ La clave ingresada parece inválida. Abortando.")
+                    sys.exit(1)
+            except KeyboardInterrupt:
+                print("\n👋 Configuración cancelada.")
+                sys.exit(0)
+            except Exception as e:
+                 print(f"❌ Error leyendo entrada: {e}")
+                 sys.exit(1)
+        else:
+            # Non-interactive mode (e.g. running from Sentinel or Cron)
+            print("❌ Error: GOOGLE_API_KEY no configurada en .env")
+            print("   Como estás en modo no-interactivo, debes editar el archivo .env manualmente.")
+            sys.exit(1)
+    
+    return api_key
+
+# Initialize client with the checked/prompted key
+client = genai.Client(api_key=check_configuration())
 
 def save_report(content):
     if not os.path.exists("reports"): os.makedirs("reports")

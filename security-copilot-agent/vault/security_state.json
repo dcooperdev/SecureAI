@@ -1,10 +1,10 @@
 {
-  "timestamp": "1768963043",
+  "timestamp": "1769040334",
   "score": 45,
   "findings": [
     {
-      "event_id": "2920c54cdedb40ae2ca003e678e7e1c148bb38d9478c987d7d1bc8c894f23e3e",
-      "timestamp": "1768963004",
+      "event_id": "fea036a01b907a822cd29b33640414d7a17a5713b610a6836dd94d96c500add5",
+      "timestamp": "1769040299",
       "plugin": "sensor_network_discovery",
       "result": {
         "severity": "INFO",
@@ -28,27 +28,15 @@
               443
             ],
             "status": "ONLINE"
-          },
-          {
-            "ip": "192.168.1.35",
-            "hostname": null,
-            "open_ports": [],
-            "status": "ONLINE"
-          },
-          {
-            "ip": "192.168.1.33",
-            "hostname": null,
-            "open_ports": [],
-            "status": "ONLINE"
           }
         ],
-        "impact_hint": "Discovered 4 active hosts in subnet 192.168.1.0/24. 1 neighbors exposing critical ports.",
+        "impact_hint": "Discovered 2 active hosts in subnet 192.168.1.0/24. 1 neighbors exposing critical ports.",
         "local_ip": "192.168.1.34"
       }
     },
     {
-      "event_id": "569447396890505331cdb067748b5123478a6bfb6726a7ba58933de29211854f",
-      "timestamp": "1768963005",
+      "event_id": "b9d181261a921527245aad88e5770db4c93c4d9a08cb2abd29e8cb1fed0312d4",
+      "timestamp": "1769040300",
       "plugin": "sensor_procesos",
       "result": {
         "severity": "MEDIUM",
@@ -80,32 +68,6 @@
             "remote_ip": null
           },
           {
-            "port": 135,
-            "service": "RPC",
-            "status": "LISTEN",
-            "process": {
-              "name": "svchost.exe",
-              "pid": 1220,
-              "username": "SYSTEM/Protected",
-              "status": "running",
-              "exe": "AccessDenied"
-            },
-            "remote_ip": null
-          },
-          {
-            "port": 135,
-            "service": "RPC",
-            "status": "LISTEN",
-            "process": {
-              "name": "svchost.exe",
-              "pid": 1220,
-              "username": "SYSTEM/Protected",
-              "status": "running",
-              "exe": "AccessDenied"
-            },
-            "remote_ip": null
-          },
-          {
             "port": 445,
             "service": "SMB",
             "status": "LISTEN",
@@ -119,12 +81,38 @@
             "remote_ip": null
           },
           {
+            "port": 135,
+            "service": "RPC",
+            "status": "LISTEN",
+            "process": {
+              "name": "svchost.exe",
+              "pid": 1220,
+              "username": "SYSTEM/Protected",
+              "status": "running",
+              "exe": "AccessDenied"
+            },
+            "remote_ip": null
+          },
+          {
             "port": 5432,
             "service": "PostgreSQL",
             "status": "LISTEN",
             "process": {
               "name": "postgres.exe",
               "pid": 7056,
+              "username": "SYSTEM/Protected",
+              "status": "running",
+              "exe": "AccessDenied"
+            },
+            "remote_ip": null
+          },
+          {
+            "port": 135,
+            "service": "RPC",
+            "status": "LISTEN",
+            "process": {
+              "name": "svchost.exe",
+              "pid": 1220,
               "username": "SYSTEM/Protected",
               "status": "running",
               "exe": "AccessDenied"
@@ -149,8 +137,8 @@
       }
     },
     {
-      "event_id": "2fd7c1b173706b88af2cd1a695935252f8603ef4e15d2cc2c93611c8e5d5e35e",
-      "timestamp": "1768963005",
+      "event_id": "a88a34332e26a30ae193b891f38178b9de405babc257cefee6be9b424c23fcc3",
+      "timestamp": "1769040300",
       "host_id": "PC-DAVID",
       "plugin": "net_scanner",
       "result": {
@@ -163,15 +151,11 @@
           },
           {
             "ip": "[IP]",
-            "mac": "88-52-eb-77-cb-3e"
-          },
-          {
-            "ip": "[IP]",
-            "mac": "42-9c-34-a2-a3-6c"
-          },
-          {
-            "ip": "[IP]",
             "mac": "b4-b7-42-a1-92-2a"
+          },
+          {
+            "ip": "[IP]",
+            "mac": "ff-ff-ff-ff-ff-ff"
           },
           {
             "ip": "[IP]",
@@ -192,13 +176,17 @@
           {
             "ip": "[IP]",
             "mac": "01-00-5e-7f-ff-fa"
+          },
+          {
+            "ip": "[IP]",
+            "mac": "ff-ff-ff-ff-ff-ff"
           }
         ]
       }
     },
     {
-      "event_id": "5b2c8f14360eae203e0c1001b77e21a4b3abc41d94650ee63e843aafee7cd15f",
-      "timestamp": "1768963005",
+      "event_id": "52459235f250b6676ecb0cc8867f7d86f76e55e26a1bfda32ff5ba82cb0b8819",
+      "timestamp": "1769040300",
       "host_id": "PC-DAVID",
       "plugin": "system_scanner",
       "result": {
@@ -212,8 +200,8 @@
       }
     },
     {
-      "event_id": "8a4c484ad0cb6ca5f7127f32f4896767b191323f8f820bc54231713c5b20f813",
-      "timestamp": "1768963005",
+      "event_id": "08c57ed8b55055a676af03563f74fd755e6aa73d0eaddbc86532370d3e174fe3",
+      "timestamp": "1769040300",
       "plugin": "sensor_sistema",
       "result": {
         "severity": "INFO",
@@ -232,8 +220,8 @@
       }
     },
     {
-      "event_id": "f53206604334c1045ccfbc2839f1a2805da35eab808e93d3949d0e88b20c8d4c",
-      "timestamp": "1768963009",
+      "event_id": "6061230e30b79c6809bbcd8868bc7125f5fbcb2b66f5cb19d98d95e8135f9d7d",
+      "timestamp": "1769040304",
       "plugin": "sensor_vulnerabilidades",
       "result": {
         "severity": "HIGH",
