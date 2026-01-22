@@ -1,6 +1,6 @@
 ; installer/galt_setup.iss
 #define MyAppName "Galt.ai Security Suite"
-#define MyAppVersion "3.0.4"
+#define MyAppVersion "3.0.5"
 #define MyAppPublisher "Galt.ai Security Division"
 #define MyAppExeName "GaltAI_Agent.exe"
 
@@ -11,7 +11,7 @@ AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 DefaultDirName={autopf}\{#MyAppName}
 PrivilegesRequired=admin
-OutputDir=..\Output
+OutputDir=..\release
 OutputBaseFilename=GaltAI_Setup_v{#MyAppVersion}
 Compression=lzma
 SolidCompression=yes
