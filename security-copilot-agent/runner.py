@@ -184,7 +184,7 @@ def run_security_flow():
     for sensor in sensor_files:
         print(f"🚀 Ejecutando {sensor}...")
         try:
-            command = f"python -u {sensor} --local-only"
+            command = f'"{sys.executable}" -u {sensor} --local-only'
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True, encoding='utf-8')
             stdout, stderr = process.communicate()
             

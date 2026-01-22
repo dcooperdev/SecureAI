@@ -1,137 +1,134 @@
-# 🛡️ Galt.ai - CISO Virtual de Élite para PyMEs
+# 🛡️ Galt.ai - CISO Virtual de Élite para PyMEs (Cross-Platform)
 
-> **Versión**: v2.0 Pro  
+> **Versión**: v2.5 Universal
 > **Estado**: Producción / Despliegue Crítico  
-> **Descripción**: Plataforma de ciberseguridad autónoma "Agentic AI" diseñada para auditar, monitorear y mitigar riesgos en tiempo real en entornos Windows. Actúa como un CISO (Chief Information Security Officer) virtual las 24 horas del día.
+> **Soporte de OS**: Windows 10+, Linux (Debian/Ubuntu/CentOS), macOS
+> **Descripción**: Plataforma de ciberseguridad autónoma "Agentic AI" diseñada para auditar, monitorear y mitigar riesgos en tiempo real. Actúa como un CISO (Chief Information Security Officer) virtual las 24 horas del día.
 
 ---
 
-## 🏗️ Arquitectura
+## 🏗️ Arquitectura Universal
 
-Galt.ai opera bajo una arquitectura descentralizada de **Orquestador + Micro-Sensores**:
+Galt.ai opera bajo una arquitectura descentralizada de **Orquestador + Micro-Sensores** que se adapta nativamente al sistema operativo anfitrión:
 
-1.  **Micro-Sensores**: Scripts ligeros en Python (`sensor_*.py`) que se ejecutan de forma independiente para recolectar telemetría específica (red, procesos, vulnerabilidades).
-2.  **Orquestador (`runner.py`)**: El cerebro del sistema. Ejecuta los sensores, agrega la data, realiza análisis de deriva ("Drift Analysis") y consulta a la IA (Gemini 2.5 Pro) para generar reportes estratégicos.
-3.  **Bóveda (`/vault`)**: Sistema de persistencia local que almacena el estado de seguridad histórico para detectar cambios sutiles (puertos abiertos recientemente, nuevos procesos).
+1.  **Micro-Sensores Políglotas**: Scripts inteligentes (`sensor_procesos.py`, etc.) que detectan el OS y utilizan comandos nativos para máxima profundidad:
+    *   **Windows**: Usa `netstat`, `tasklist`, `wmic`.
+    *   **Linux**: Usa `ss`, `ip`, `ps`.
+    *   **macOS**: Usa `lsof`, `ifconfig`, `ps`.
+2.  **Orquestador (`runner.py`)**: El cerebro del sistema. Ejecuta los sensores en subprocesos aislados usando el intérprete correcto del sistema, agrega la data y consulta a la IA (Gemini 2.5 Pro).
+3.  **Visualización Moderna**: Una nueva capa de presentación generaDashboards HTML oscuros e interactivos.
+4.  **Bóveda (`/vault`)**: Sistema de persistencia local JSON.
 
 ---
 
 ## 📋 Requisitos Previos
 
-Antes de desplegar Galt.ai, asegúrese de cumplir con lo siguiente:
-
-*   **Sistema Operativo**: Windows 10/11 o Windows Server (2016+).
-*   **Python**: Versión 3.10 o superior instalada y agregada al PATH.
-*   **Permisos**: Se requieren permisos de **Administrador** para que los sensores puedan realizar escaneos profundos de red (netstat) y procesos del sistema.
-*   **Conectividad**: Acceso a Internet para consultar la API de Google Gemini.
+*   **Python**: Versión 3.10 o superior.
+*   **Permisos**: Se recomiendan permisos de **Administrador/Root** para una visibilidad completa de red (puertos listening, procesos de sistema).
+*   **API Key**: Una clave válida de Google Gemini (AI Studio).
 
 ---
 
-## 🚀 Guía de Instalación
+## 🚀 Guía de Instalación Rápida
 
-Siga estos pasos para desplegar el agente en menos de 2 minutos.
+Hemos simplificado el despliegue a un solo script para sistemas Unix (Linux/macOS) y mantenemos la simplicidad en Windows.
 
-### 1. Clonar el Repositorio
+### 🐧 Linux y 🍎 macOS (Automático)
 
-```bash
-git clone https://github.com/dcooperdev/Galt.ai.git
-cd Galt.ai
-```
+El nuevo instalador `install.sh` se encarga de todo: crea el entorno virtual, instala dependencias y configura tu API Key.
 
-### 2. Crear Entorno Virtual (Recomendado)
+1.  **Ejecutar Instalador**:
+    ```bash
+    chmod +x install.sh
+    ./install.sh
+    ```
+2.  Sigue las instrucciones en pantalla.
 
-Aísla las dependencias del proyecto para evitar conflictos.
+### 🪟 Windows (Manual)
 
-```bash
-python -m venv venv
-.\venv\Scripts\activate
-```
-
-### 3. Instalar Dependencias
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-## 🔑 Configuración del Entorno (.env)
-
-**CRÍTICO**: Galt.ai requiere una clave de API válida de Google Gemini para funcionar. Esta configuración se gestiona a través de un archivo `.env` en la raíz del proyecto.
-
-1.  Cree un archivo llamado `.env` en la carpeta principal (`f:\Projects\SecureIA\security-copilot-agent`).
-2.  Obtenga su API Key gratuita en [Google AI Studio](https://aistudio.google.com/).
-3.  Pegue el siguiente contenido en el archivo `.env`:
-
-```ini
-# --- Galt.ai Configuration ---
-
-# API Key de Google Gemini (Requerido)
-GOOGLE_API_KEY=tu_api_key_secreta_aqui
-
-# Intervalo de escaneo para el modo Centinela (en segundos)
-# 3600 = 1 hora.
-SCAN_INTERVAL_SECONDS=3600
-
-# Nivel de detalle de logs (DEBUG, INFO, WARNING, ERROR)
-LOG_LEVEL=INFO
-```
-
-> **⚠️ NOTA DE SEGURIDAD**: Nunca suba el archivo `.env` al repositorio de control de versiones. Asegúrese de que `.env` esté incluido en su archivo `.gitignore`.
+1.  **Crear entorno virtual**:
+    ```powershell
+    python -m venv venv
+    .\venv\Scripts\activate
+    ```
+2.  **Instalar dependencias**:
+    ```powershell
+    pip install -r requirements.txt
+    ```
+3.  **Configurar**: Al ejecutar el agente por primera vez, te pedirá tu API Key si no la encuentra.
 
 ---
 
 ## 🎮 Guía de Uso
 
-Galt.ai puede operar en dos modos principales:
+Galt.ai ahora ofrece comandos directos (shortcuts) en Linux/macOS.
 
 ### 1. Modo Manual (Auditoría Puntual)
 
-Ejecute un escaneo completo bajo demanda. Ideal para revisiones diarias o respuesta a incidentes.
+Ejecuta un escaneo completo, genera el Dashboard y actualiza la bóveda.
+
+*   **Linux/macOS**:
+    ```bash
+    ./galt
+    ```
+*   **Windows**:
+    ```powershell
+    python runner.py
+    ```
+
+### 2. Modo Centinela (Vigilancia 24/7)
+
+Monitoreo continuo en segundo plano. Solo te notifica si hay cambios drásticos en tu Score de seguridad ("Drift").
+
+*   **Linux/macOS**:
+    ```bash
+    ./galt-sentinel
+    ```
+*   **Windows**:
+    ```powershell
+    python sentinel.py
+    ```
+
+### 3. Modo Silencioso (CI/CD)
+
+Para integrar en scripts o cronjobs sin abrir el navegador automáticamente:
 
 ```bash
-python runner.py
+./galt --auto
+# o
+python runner.py --auto
 ```
 
-*   El sistema ejecutará todos los sensores.
-*   Generará un reporte en la carpeta `/reports`.
-*   Actualizará el estado de seguridad en `/vault`.
+---
 
-### 2. Modo Centinela (Monitoreo 24/7)
+## 📊 Nuevo Dashboard
 
-Inicia un proceso persistente que ejecuta auditorías periódicas automáticamente (definido por `SCAN_INTERVAL_SECONDS`).
+Galt.ai ahora genera un **Dashboard Interactivo** después de cada escaneo:
 
-```bash
-python sentinel.py
-```
-
-### Estructura de Carpetas Clave
-
-*   **`/reports`**: Aquí encontrará los informes ejecutivos en formato Markdown (`Galt_Report_YYYYMMDD_...md`).
-*   **`/vault`**: Contiene `security_state.json` (último estado conocido) y `history_log.jsonl` (historial de eventos). **No elimine estos archivos**; son vitales para el Análisis de Deriva.
+*   **Ubicación**: `reports/dashboard.html`
+*   **Características**:
+    *   **Score en Tiempo Real**: Visualización gráfica de tu nivel de seguridad (0-100).
+    *   **Informe AI**: Análisis detallado de Gemini con formato Markdown renderizado.
+    *   **Exportación de Data**: Acceso directo al JSON crudo (`reports/data/scan_*.json`) para integración con SIEM o Firebase.
 
 ---
 
-## 📡 Descripción de Sensores
+## 📡 Capacidades del Sensor (Actualizado)
 
-Galt.ai v2 incluye un arsenal de sensores especializados:
-
-| Sensor | Propósito | Telemetría Clave |
-| :--- | :--- | :--- |
-| **`sensor_procesos.py`** | **Inteligencia de Procesos** | Mapeo de puertos a PIDs, detección de procesos ocultos, monitoreo de conexiones salientes (C2). |
-| **`sensor_network_discovery.py`** | **Reconocimiento de Red** | Escaneo de subred local, detección de "Sistemas Espejo" (vecinos con mismos puertos abiertos), Fingerprinting de servicios. |
-| **`sensor_vulnerabilidades.py`** | **Análisis de Superficie** | Escaneo rápido de puertos críticos (445, 3389, 5432) y correlación básica de CVEs. |
-| **`sensor_sistema.py`** | **Perfilado de Host** | Información del OS, versión de Kernel, usuario activo y uptime. |
-| **`sensor_red.py`** | **Estado de Red Local** | Interfaces activas, IPs locales, Gateway y métricas de tráfico. |
+| Sensor | Windows (Comandos) | Linux (Comandos) | macOS (Comandos) | Qué detecta |
+| :--- | :--- | :--- | :--- | :--- |
+| **Procesos** | `netstat -ano`, `tasklist` | `ss -lntp`, `ps` | `lsof -iTCP`, `ps` | Puertos abiertos, PIDs ocultos, Shadows IT. |
+| **Red** | `ipconfig`, `arp` | `ip addr`, `ip neigh` | `ifconfig`, `arp` | Interfaces promiscuas, vecinos de red. |
+| **Vulns** | Análisis de puertos | Análisis de puertos | Análisis de puertos | Servicios expuestos (SMB, RDP, SSH viejo). |
 
 ---
 
-## 🛠️ Solución de Problemas (Quick Wins)
+## 🛠️ Solución de Problemas
 
-*   **Error "AccessDenied" en procesos**: Asegúrese de correr la terminal como **Administrador**.
-*   **Error 404/403 en API**: Verifique que su `GOOGLE_API_KEY` en el archivo `.env` sea correcta y tenga saldo/quota disponible.
-*   **Reporte sin "Acciones"**: Galt.ai requiere contexto. Si el sistema es seguro, no sugerirá correcciones agresivas.
+*   **Linux/Mac - "Permission Denied"**: Asegúrate de dar permisos de ejecución: `chmod +x galt galt-sentinel`.
+*   **"AccessDenied" en sensores**: Galt ve más si corre como `sudo ./galt` o 'Ejecutar como Administrador'.
+*   **API Key Error**: Edita el archivo `.env` manualmente si te equivocaste al ingresarla.
 
 ---
 
-**© 2026 Galt.ai Security Division.** *La seguridad no es una característica, es un estado mental.*
+**© 2026 Galt.ai Security Division.** *Multi-platform Cyber Defense.*
