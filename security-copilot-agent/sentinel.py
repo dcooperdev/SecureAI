@@ -43,7 +43,7 @@ def main():
             score_before = get_current_score()
             
             # Execute Runner
-            result = subprocess.run([sys.executable, "runner.py"], capture_output=True, text=True, encoding='utf-8')
+            result = subprocess.run([sys.executable, "runner.py", "--auto"], capture_output=True, text=True, encoding='utf-8')
             
             # Print Runner Output (filtered or full)
             print(result.stdout)

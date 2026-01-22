@@ -65,11 +65,12 @@ def check_configuration():
 # Initialize client with the checked/prompted key
 client = genai.Client(api_key=check_configuration())
 
-def save_report(content):
-    if not os.path.exists("reports"): os.makedirs("reports")
-    filename = f"reports/Galt_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+def save_json_data(data):
+    data_dir = "reports/data"
+    if not os.path.exists(data_dir): os.makedirs(data_dir)
+    filename = f"{data_dir}/scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     with open(filename, "w", encoding="utf-8") as f:
-        f.write(content)
+        json.dump(data, f, indent=2)
     return filename
 
 def run_security_flow():
@@ -292,14 +293,25 @@ def run_security_flow():
         report_text = response.text
         print("\n" + "—"*60 + "\n" + report_text + "\n" + "—"*60)
         
-        path = save_report(report_text)
-        print(f"\n✅ REPORTE GUARDADO: {path}")
+        # --- NEW DATA STORAGE ---
+        current_time = datetime.now()
+        payload = {
+            "client_id": "LOCAL_PIONEER",
+            "timestamp_epoch": int(current_time.timestamp()),
+            "timestamp_human": current_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "score": security_score,
+            "findings": all_data,
+            "ai_analysis_markdown": report_text
+        }
+        
+        json_path = save_json_data(payload)
+        print(f"\n📦 DATOS GUARDADOS: {json_path}")
         
         # --- UPDATE VAULT ---
         new_state = {
-            "timestamp": str(int(datetime.now().timestamp())),
+            "timestamp": str(int(current_time.timestamp())),
             "score": security_score,
-            "findings": all_data  # Saving FULL data now for better comparison next time
+            "findings": all_data 
         }
         
         with open(state_file, "w") as f:
@@ -307,7 +319,7 @@ def run_security_flow():
             
         with open(history_file, "a") as f:
             log_entry = new_state.copy()
-            log_entry["report_path"] = path
+            log_entry["report_path"] = json_path
             f.write(json.dumps(log_entry) + "\n")
             
         print("💾 Estado de seguridad actualizado en Vault.")
@@ -325,71 +337,99 @@ def run_security_flow():
 
     # --- USER TESTING: PAYLOAD & DASHBOARD ---
     
-    # 1. Generate JSON Payload
-    payload = {
-        "client_id": "LOCAL_TEST",
-        "timestamp": datetime.now().isoformat(),
-        "score": security_score,
-        "findings": all_data,
-        "report_md": report_text
-    }
-    
-    with open("reports/latest_payload.json", "w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=2)
-    print("📦 Payload JSON generado: reports/latest_payload.json")
+    # --- DASHBOARD GENERATION ---
+    generate_dashboard(json_path)
 
-    # 2. Generate HTML Dashboard
-    generate_html_report(security_score, report_text, "reports/latest_payload.json")
+    # Conditional Auto-Launch
+    is_auto_mode = "--auto" in sys.argv
+    drift_detected = bool(change_context) 
     
-def generate_html_report(score, report_md, json_path):
+    if not is_auto_mode or drift_detected:
+        import webbrowser
+        dashboard_path = os.path.abspath("reports/dashboard.html")
+        webbrowser.open(f"file://{dashboard_path}")
+        print("🚀 Dashboard abierto en navegador.")
+    else:
+        print("🤫 Modo Silencioso: Dashboard actualizado en segundo plano.")
+
+def generate_dashboard(json_path):
+    # Read data
+    with open(json_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+        
+    score = data.get("score", 0)
+    report_md = data.get("ai_analysis_markdown", "")
+    timestamp = data.get("timestamp_human", "")
+
     # Color logic
-    color_class = "bg-success"
-    if score < 50: color_class = "bg-danger"
-    elif score < 80: color_class = "bg-warning"
+    color_class = "text-success"
+    border_class = "border-success"
+    if score < 50: 
+        color_class = "text-danger"
+        border_class = "border-danger"
+    elif score < 80: 
+        color_class = "text-warning"
+        border_class = "border-warning"
     
     html_content = f"""<!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galt.ai Security Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Galt.ai Pioneer Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        body {{ background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }}
-        .navbar {{ background: #000; color: #fff; }}
-        .score-card {{ background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }}
-        .markdown-body {{ background: #fff; padding: 40px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
-        pre {{ background-color: #f6f8fa; padding: 15px; border-radius: 5px; }}
-        img {{ max-width: 100%; }}
+        body {{ background-color: #0d1117; font-family: 'Segoe UI', sans-serif; }}
+        .navbar {{ background: #161b22; border-bottom: 1px solid #30363d; }}
+        .hero-section {{ padding: 60px 0; text-align: center; }}
+        .score-circle {{ 
+            width: 150px; height: 150px; border-radius: 50%; border: 8px solid; 
+            margin: 0 auto; display: flex; align-items: center; justify-content: center;
+            font-size: 3rem; font-weight: bold; background: #21262d;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }}
+        .report-container {{ 
+            background: #161b22; border: 1px solid #30363d; border-radius: 6px; 
+            padding: 40px; margin-top: 30px; 
+        }}
+        /* Markdown Styles */
+        h1, h2, h3 {{ color: #e6edf3; margin-top: 20px; }}
+        p, li {{ color: #c9d1d9; line-height: 1.6; }}
+        code {{ background: #6e768166; padding: 2px 5px; border-radius: 4px; color: #ff7b72; }}
+        pre {{ background: #0d1117; padding: 15px; border-radius: 6px; overflow-x: auto; border: 1px solid #30363d; }}
+        .footer {{ margin-top: 50px; padding: 20px; text-align: center; color: #8b949e; font-size: 0.9rem; }}
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-dark mb-4">
+<nav class="navbar navbar-expand-lg navbar-dark">
   <div class="container">
-    <span class="navbar-brand mb-0 h1">🛡️ Galt.ai | Security Dashboard</span>
-    <span class="text-light">{datetime.now().strftime('%Y-%m-%d %H:%M')}</span>
+    <a class="navbar-brand fw-bold" href="#">👁️ Galt.ai</a>
+    <span class="navbar-text ms-auto text-secondary small me-3">
+        {timestamp}
+    </span>
+    <a href="data/{os.path.basename(json_path)}" target="_blank" class="btn btn-outline-primary btn-sm">
+        💾 Exportar JSON
+    </a>
   </div>
 </nav>
 
-<div class="container">
-    <div class="score-card text-center">
-        <h3>Security Score</h3>
-        <div class="display-4 fw-bold mb-3">{score}/100</div>
-        <div class="progress" style="height: 30px;">
-            <div class="progress-bar {color_class}" role="progressbar" style="width: {score}%" aria-valuenow="{score}" aria-valuemin="0" aria-valuemax="100">
-                {score}%
-            </div>
-        </div>
-        <div class="mt-3">
-            <a href="latest_payload.json" target="_blank" class="btn btn-outline-dark btn-sm">Ver JSON Crudo</a>
-        </div>
+<div class="container hero-section">
+    <div class="score-circle {color_class} {border_class}">
+        {score}
     </div>
+    <p class="mt-3 text-secondary">SECURITY SCORE</p>
+</div>
 
-    <div class="markdown-body" id="report-content">
-        <!-- Rendered Markdown will go here -->
+<div class="container">
+    <div class="report-container" id="report-content">
+        <!-- Rendered Markdown -->
     </div>
+</div>
+
+<div class="footer">
+    Modo Pionero - Tus datos están listos para la nube ☁️
 </div>
 
 <script>
@@ -405,11 +445,6 @@ def generate_html_report(score, report_md, json_path):
         f.write(html_content)
         
     print(f"📊 Dashboard generado: {dashboard_path}")
-    
-    # Auto-Launch
-    import webbrowser
-    webbrowser.open(f"file://{dashboard_path}")
-    print("🚀 Dashboard abierto en navegador.")
 
 if __name__ == "__main__":
     run_security_flow()
