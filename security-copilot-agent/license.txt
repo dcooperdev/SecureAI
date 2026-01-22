@@ -1,0 +1,24 @@
+GALT.AI SECURITY SUITE
+END USER LICENSE AGREEMENT
+
+IMPORTANT: PLEASE READ THIS LICENSE CAREFULLY BEFORE USING THIS SOFTWARE.
+
+1. LICENSE GRANT
+   "Galt.ai Security Suite" (the "Software") is licensed, not sold. Galt.ai Inc. grants you a personal, non-exclusive, non-transferable license to use the Software for your internal security monitoring purposes.
+
+2. DISCLAIMER OF WARRANTIES ("AS IS")
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+3. RESTRICTIONS
+   You may not:
+   a) Reverse engineer, decompile, or disassemble the Software.
+   b) Rent, lease, or lend the Software to third parties.
+   c) Use the Software for illegal or malicious purposes.
+
+4. TERMINATION
+   This license is effective until terminated. You may terminate it at any time by destroying the Software. It will also terminate immediately if you fail to comply with any term of this license.
+
+5. GOVERNING LAW
+   This license shall be governed by the laws of the jurisdiction in which the Software is deployed.
+
+Copyright (c) 2026 Galt.ai Security Division. All rights reserved.
