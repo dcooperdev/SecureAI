@@ -2,8 +2,10 @@ name: Build & Release Galt.ai
 
 on:
   push:
+    branches:
+      - "main" # Ejecutar CI (Build) en cada push a main
     tags:
-      - 'v*' # Se ejecuta solo cuando subes un tag (ej: v2.0)
+      - 'v*' # Ejecutar CD (Release) cuando subes un tag (ej: v2.0)
 
 permissions:
   contents: write
@@ -41,6 +43,7 @@ jobs:
   release:
     needs: [build-windows]
     runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
     steps:
       - uses: actions/checkout@v3
       
