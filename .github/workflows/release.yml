@@ -16,12 +16,15 @@ jobs:
     name: 🏗️ Build Windows
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4  # ACTUALIZADO A v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5 # ACTUALIZADO A v5
         with:
           python-version: '3.10'
+
+      - name: Install Inno Setup (Chocolatey)
+        run: choco install innosetup --no-progress
 
       - name: Install Dependencies
         run: |
@@ -31,16 +34,17 @@ jobs:
       - name: Compile EXE
         run: python build_windows.py
 
-      - name: Compile Installer (Inno Setup)
-        uses: Minionguyjosh/inno-setup-action@v1.2.2
-        with:
-          path: installer/galt_setup.iss
+      - name: Compile Installer (ISCC)
+        # Usamos el compilador nativo directamente, sin intermediarios
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer/galt_setup.iss
 
       - name: Upload Windows Setup
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4 # ACTUALIZADO A v4
         with:
           name: GaltAI_Setup_Windows
-          path: Output/GaltAI_Setup_v3.0.exe
+          path: release/GaltAI_Setup_*.exe 
+          # Nota: Inno Setup configurado para guardar en ../release según tu ISS corregido
 
   # ==================================================================
   # 2. LINUX BUILD
@@ -49,10 +53,10 @@ jobs:
     name: 🐧 Build Linux
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
@@ -84,7 +88,7 @@ jobs:
           tar -czvf ../GaltAI_Linux.tar.gz *
 
       - name: Upload Linux Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: GaltAI_Linux
           path: GaltAI_Linux.tar.gz
@@ -96,10 +100,10 @@ jobs:
     name: 🍎 Build MacOS
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
@@ -131,7 +135,7 @@ jobs:
           zip -r ../GaltAI_Mac.zip *
 
       - name: Upload Mac Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: GaltAI_Mac
           path: GaltAI_Mac.zip
@@ -144,22 +148,25 @@ jobs:
     needs: [build-windows, build-linux, build-mac]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      
+      # En v4, download-artifact descarga todo en carpetas separadas por defecto
+      # o podemos especificar merge-multiple: true si queremos todo junto
       
       - name: Download Windows Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: GaltAI_Setup_Windows
           path: artifacts
 
       - name: Download Linux Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: GaltAI_Linux
           path: artifacts
 
       - name: Download Mac Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: GaltAI_Mac
           path: artifacts
@@ -168,9 +175,9 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            artifacts/GaltAI_Setup_v3.0.exe
-            artifacts/GaltAI_Linux.tar.gz
-            artifacts/GaltAI_Mac.zip
+            artifacts/*.exe
+            artifacts/*.tar.gz
+            artifacts/*.zip
           draft: false
           prerelease: false
         env:
