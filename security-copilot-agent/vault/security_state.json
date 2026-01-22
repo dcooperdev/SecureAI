@@ -1,10 +1,10 @@
 {
-  "timestamp": "1769043233",
+  "timestamp": "1769043935",
   "score": 45,
   "findings": [
     {
-      "event_id": "87797482851823fb79d746d8dbd08db8eec19eb39fc2ad192e869d9a93f1834d",
-      "timestamp": "1769043198",
+      "event_id": "d8f0395ecc1cf8f2cb88abc6cd1526e0a9340e779848ba973c1c9bc9a47b783d",
+      "timestamp": "1769043893",
       "plugin": "sensor_network_discovery",
       "result": {
         "severity": "INFO",
@@ -28,15 +28,21 @@
               443
             ],
             "status": "ONLINE"
+          },
+          {
+            "ip": "192.168.1.33",
+            "hostname": null,
+            "open_ports": [],
+            "status": "ONLINE"
           }
         ],
-        "impact_hint": "Discovered 2 active hosts in subnet 192.168.1.0/24. 1 neighbors exposing critical ports.",
+        "impact_hint": "Discovered 3 active hosts in subnet 192.168.1.0/24. 1 neighbors exposing critical ports.",
         "local_ip": "192.168.1.34"
       }
     },
     {
-      "event_id": "fe1d86dbd97a7acfa3d0c445ac5d50e00b5c4addf3f9f1b71187b2234fdb1cbd",
-      "timestamp": "1769043199",
+      "event_id": "fed43f3ea4f56bf65a014e09d2aa13568d011e160929942c13394c4b3bff2d26",
+      "timestamp": "1769043894",
       "plugin": "sensor_procesos",
       "result": {
         "severity": "MEDIUM",
@@ -61,6 +67,19 @@
             "process": {
               "name": "svchost.exe",
               "pid": 1220,
+              "username": "SYSTEM/Protected",
+              "status": "running",
+              "exe": "AccessDenied"
+            },
+            "remote_ip": null
+          },
+          {
+            "port": 5432,
+            "service": "PostgreSQL",
+            "status": "LISTEN",
+            "process": {
+              "name": "postgres.exe",
+              "pid": 7056,
               "username": "SYSTEM/Protected",
               "status": "running",
               "exe": "AccessDenied"
@@ -118,27 +137,14 @@
               "exe": ""
             },
             "remote_ip": null
-          },
-          {
-            "port": 5432,
-            "service": "PostgreSQL",
-            "status": "LISTEN",
-            "process": {
-              "name": "postgres.exe",
-              "pid": 7056,
-              "username": "SYSTEM/Protected",
-              "status": "running",
-              "exe": "AccessDenied"
-            },
-            "remote_ip": null
           }
         ],
         "impact_hint": "Verified 7 processes on critical ports."
       }
     },
     {
-      "event_id": "2b5c3395f6ade49c935af4f9f29745129f3a5299c0a005115a591c712f4c1ec3",
-      "timestamp": "1769043199",
+      "event_id": "5fdaa2fc0105d2e7a53ff3f8d003681df63e67be1081687d69b1c0e85e99ed6e",
+      "timestamp": "1769043894",
       "host_id": "PC-DAVID",
       "plugin": "net_scanner",
       "result": {
@@ -189,8 +195,8 @@
       }
     },
     {
-      "event_id": "b5c5f9e4ea6164740031a6d2c5b62e374e590992e87080c4e80e59d1e318ffe3",
-      "timestamp": "1769043199",
+      "event_id": "be49ded22197df0877b5121b78c50d40d582f9ff66eabaaee5075061f1bc1aa8",
+      "timestamp": "1769043894",
       "host_id": "PC-DAVID",
       "plugin": "system_scanner",
       "result": {
@@ -204,8 +210,8 @@
       }
     },
     {
-      "event_id": "8509e2d14b3caef634da880c67b02bd0eae72169f66c027bccdb1a5aefc5cf40",
-      "timestamp": "1769043199",
+      "event_id": "d2090e32d745e2331044c13512d0e3507f951839a6fbfe240464407c3e93a5d5",
+      "timestamp": "1769043894",
       "plugin": "sensor_sistema",
       "result": {
         "severity": "INFO",
@@ -224,8 +230,8 @@
       }
     },
     {
-      "event_id": "b91e12de233e2b6b244a274bcfd7a1a58fda6891f85932750d1d00c013e249a0",
-      "timestamp": "1769043203",
+      "event_id": "8860348e147e8d30cd60732e07029812aefe2c51053701ae76ff460faa0863d6",
+      "timestamp": "1769043898",
       "plugin": "sensor_vulnerabilidades",
       "result": {
         "severity": "HIGH",
