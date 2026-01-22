@@ -1,6 +1,6 @@
 ; installer/galt_setup.iss
 #define MyAppName "Galt.ai Security Suite"
-#define MyAppVersion "3.0.3"
+#define MyAppVersion "3.0.4"
 #define MyAppPublisher "Galt.ai Security Division"
 #define MyAppExeName "GaltAI_Agent.exe"
 
@@ -21,7 +21,7 @@ WizardStyle=modern
 ; Nota: En GitHub Actions, el ejecutable se genera en la raíz o dist. 
 ; Asegúrate de que build_windows.py lo deje donde Inno Setup lo busca.
 Source: "..\dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\.env.example"; DestDir: "{app}"; DestName: ".env"; Flags: skipifsourcedoesnexist onlyifdoesntexist
+Source: "..\.env.example"; DestDir: "{app}"; DestName: ".env"; Flags: skipifsourcedoesntexist onlyifdoesntexist
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
