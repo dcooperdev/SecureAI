@@ -1,6 +1,6 @@
 # 🛡️ Galt.ai - CISO Virtual de Élite para PyMEs (Cross-Platform)
 
-> **Versión**: v2.5 Universal
+> **Versión**: v3.0 Universal
 > **Estado**: Producción / Despliegue Crítico  
 > **Soporte de OS**: Windows 10+, Linux (Debian/Ubuntu/CentOS), macOS
 > **Descripción**: Plataforma de ciberseguridad autónoma "Agentic AI" diseñada para auditar, monitorear y mitigar riesgos en tiempo real. Actúa como un CISO (Chief Information Security Officer) virtual las 24 horas del día.
@@ -21,83 +21,82 @@ Galt.ai opera bajo una arquitectura descentralizada de **Orquestador + Micro-Sen
 
 ---
 
-## 📋 Requisitos Previos
+## 🚀 Guía de Instalación
 
-*   **Python**: Versión 3.10 o superior.
-*   **Permisos**: Se recomiendan permisos de **Administrador/Root** para una visibilidad completa de red (puertos listening, procesos de sistema).
-*   **API Key**: Una clave válida de Google Gemini (AI Studio).
+Ofrecemos dos métodos de instalación: **Binarios (Rápido)** y **Código Fuente (Desarrollador)**.
 
----
+### Opción A: Binarios (Recomendado para Usuarios Finales)
 
-## 🚀 Guía de Instalación Rápida
+1.  Ve a la sección de **[Releases](https://github.com/dcooperdev/SecureAI/releases)** en GitHub.
+2.  Descarga el instalador o script apropiado para tu OS:
+    *   **Windows**: Descarga y ejecuta `GaltAI_Setup_v3.0.exe`.
+        *   Instalará el agente como una aplicación nativa.
+        *   Creará accesos directos en el Escritorio.
+    *   **Linux/macOS**: Descarga el archivo comprimido o clona el repo y ejecuta:
+        ```bash
+        ./install.sh
+        ```
 
-Hemos simplificado el despliegue a un solo script para sistemas Unix (Linux/macOS) y mantenemos la simplicidad en Windows.
+### Opción B: Código Fuente (Desarrolladores)
 
-### 🐧 Linux y 🍎 macOS (Automático)
+Si prefieres ejecutarlo manualmente o contribuir al proyecto:
 
-El nuevo instalador `install.sh` se encarga de todo: crea el entorno virtual, instala dependencias y configura tu API Key.
-
-1.  **Ejecutar Instalador**:
+1.  **Clonar Repo**:
     ```bash
-    chmod +x install.sh
-    ./install.sh
+    git clone https://github.com/dcooperdev/SecureAI.git
+    cd SecureAI
     ```
-2.  Sigue las instrucciones en pantalla.
-
-### 🪟 Windows (Manual)
-
-1.  **Crear entorno virtual**:
-    ```powershell
+2.  **Crear entorno virtual**:
+    ```bash
+    # Windows
     python -m venv venv
     .\venv\Scripts\activate
+
+    # Linux/Mac
+    python3 -m venv venv
+    source venv/bin/activate
     ```
-2.  **Instalar dependencias**:
-    ```powershell
+3.  **Instalar dependencias**:
+    ```bash
     pip install -r requirements.txt
     ```
-3.  **Configurar**: Al ejecutar el agente por primera vez, te pedirá tu API Key si no la encuentra.
+4.  **Configurar**: Crea un archivo `.env` con tu `GOOGLE_API_KEY`.
 
 ---
 
 ## 🎮 Guía de Uso
 
-Galt.ai ahora ofrece comandos directos (shortcuts) en Linux/macOS.
+### 1. Aplicación Instalada (Windows)
 
-### 1. Modo Manual (Auditoría Puntual)
+Si usaste el instalador `.exe`:
+*   Haz doble clic en el icono **"Galt.ai Security Suite"** en tu escritorio.
+*   Esto abrirá la consola de monitoreo en **Modo Centinela**.
 
-Ejecuta un escaneo completo, genera el Dashboard y actualiza la bóveda.
+### 2. Línea de Comandos (Linux/Mac/Devs)
 
-*   **Linux/macOS**:
+*   **Modo Manual (Auditoría Puntual)**:
+    Escaneo único, genera reporte y dashboard.
     ```bash
+    # Linux/Mac (Install Script)
     ./galt
-    ```
-*   **Windows**:
-    ```powershell
+    # Windows/Dev
     python runner.py
     ```
 
-### 2. Modo Centinela (Vigilancia 24/7)
-
-Monitoreo continuo en segundo plano. Solo te notifica si hay cambios drásticos en tu Score de seguridad ("Drift").
-
-*   **Linux/macOS**:
+*   **Modo Centinela (Vigilancia 24/7)**:
+    Monitoreo continuo en segundo plano. Escanea cada HORA (Plan PRO) o cada 24 HORAS (Plan FREE).
     ```bash
+    # Linux/Mac
     ./galt-sentinel
-    ```
-*   **Windows**:
-    ```powershell
+    # Windows/Dev
     python sentinel.py
     ```
 
-### 3. Modo Silencioso (CI/CD)
-
-Para integrar en scripts o cronjobs sin abrir el navegador automáticamente:
-
-```bash
-./galt --auto
-# o
-python runner.py --auto
-```
+*   **Modo Silencioso (CI/CD)**:
+    Útil para cronjobs. No abre el navegador automáticamente.
+    ```bash
+    ./galt --auto
+    ```
 
 ---
 
@@ -113,13 +112,15 @@ Galt.ai ahora genera un **Dashboard Interactivo** después de cada escaneo:
 
 ---
 
-## 📡 Capacidades del Sensor (Actualizado)
+## 📡 Capacidades y Planes
 
-| Sensor | Windows (Comandos) | Linux (Comandos) | macOS (Comandos) | Qué detecta |
-| :--- | :--- | :--- | :--- | :--- |
-| **Procesos** | `netstat -ano`, `tasklist` | `ss -lntp`, `ps` | `lsof -iTCP`, `ps` | Puertos abiertos, PIDs ocultos, Shadows IT. |
-| **Red** | `ipconfig`, `arp` | `ip addr`, `ip neigh` | `ifconfig`, `arp` | Interfaces promiscuas, vecinos de red. |
-| **Vulns** | Análisis de puertos | Análisis de puertos | Análisis de puertos | Servicios expuestos (SMB, RDP, SSH viejo). |
+El agente detecta automáticamente tu nivel de suscripción (simulado por ahora).
+
+| Plan | Frecuencia de Escaneo | Características |
+| :--- | :--- | :--- |
+| **FREE** | Cada 24 Horas | Escaneo Básico, Dashboard Local. |
+| **PRO** | Cada 1 Hora | Deep Scan (Procesos Ocultos), Alertas Inmediatas. |
+| **PIONEER**| Cada 1 Hora | Acceso anticipado a features (Beta). |
 
 ---
 
@@ -127,7 +128,7 @@ Galt.ai ahora genera un **Dashboard Interactivo** después de cada escaneo:
 
 *   **Linux/Mac - "Permission Denied"**: Asegúrate de dar permisos de ejecución: `chmod +x galt galt-sentinel`.
 *   **"AccessDenied" en sensores**: Galt ve más si corre como `sudo ./galt` o 'Ejecutar como Administrador'.
-*   **API Key Error**: Edita el archivo `.env` manualmente si te equivocaste al ingresarla.
+*   **API Key Error**: Edita el archivo `.env` manualmente si te equivocaste al ingresarla o re-ejecuta el instalador.
 
 ---
 

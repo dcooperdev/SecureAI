@@ -19,7 +19,7 @@ DisableProgramGroupPage=yes
 ; Pedir admin para poder escanear puertos y procesos
 PrivilegesRequired=admin
 OutputDir=..\release
-OutputBaseFilename=GaltAI_Setup_v{#MyAppVersion}
+OutputBaseFilename=GaltAI_Setup_Windows
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -33,8 +33,6 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 ; El ejecutable compilado por PyInstaller
 Source: "..\dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-; Archivo de ejemplo .env (opcional, el agente lo crea si falta)
-; Source: "..\.env.example"; DestDir: "{app}"; DestName: ".env"; Flags: skipifsourcedoesnexist
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
