@@ -67,6 +67,9 @@ def generate_dashboard_html(score, report_md, json_path, client_id="LOCAL_PIONEE
     if score >= 80: score_color = "#198754" # Verde
     elif score >= 50: score_color = "#ffc107" # Amarillo
 
+    # Sanitize report for JS embedding (Fix SyntaxError with backslashes in f-string)
+    sanitized_report = report_md.replace('`', r'\`').replace('$', r'\$')
+
     html_content = f"""
     <!DOCTYPE html>
     <html lang="es" data-bs-theme="dark">
@@ -145,7 +148,7 @@ def generate_dashboard_html(score, report_md, json_path, client_id="LOCAL_PIONEE
 
         <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
         <script>
-            const markdownText = `{report_md.replace('`', r'\`').replace('$', r'\$')}`; 
+            const markdownText = `{sanitized_report}`; 
             document.getElementById('report-content').innerHTML = marked.parse(markdownText);
         </script>
     </body>
