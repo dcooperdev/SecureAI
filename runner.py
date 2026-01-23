@@ -145,7 +145,7 @@ def generate_dashboard_html(score, report_md, json_path, client_id="LOCAL_PIONEE
 
         <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
         <script>
-            const markdownText = `{report_md.replace('`', '\`').replace('$', '\$')}`; 
+            const markdownText = `{report_md.replace('`', r'\`').replace('$', r'\$')}`; 
             document.getElementById('report-content').innerHTML = marked.parse(markdownText);
         </script>
     </body>
@@ -168,24 +168,35 @@ def run_security_flow():
     print("🛡️  GALT.AI v2: PLATAFORMA INTEGRAL CISO")
     print("="*60)
 
-    # 1. Autodiscovery
-    current_dir = os.getcwd()
-    sensor_files = [f for f in os.listdir(current_dir) if f.startswith("sensor_") and f.endswith(".py")]
-    
-    if not sensor_files:
-        print("❌ Error: No se encontraron sensores.")
-        return
+    # Mapeo: Nombre de archivo -> Clave del Dispatcher en main.py
+    sensor_map = {
+        "sensor_procesos.py": "sensor_procesos",
+        "sensor_red.py": "sensor_red",
+        "sensor_sistema.py": "sensor_sistema",
+        "sensor_vulnerabilidades.py": "sensor_vulnerabilidades",
+        "sensor_network_discovery.py": "sensor_network_discovery"
+    }
 
-    print(f"🔎 Autodiscovery: Detectados {len(sensor_files)} micro-sensores.\n")
+    # En modo compilado/monolito, usamos las claves del dispatcher
+    print(f"🔎 Autodiscovery: Iniciando sensores modulares (Dispatcher Mode).\n", file=sys.stderr)
 
     all_data = []
 
     # 2. Execution & Aggregation
-    for sensor in sensor_files:
-        print(f"🚀 Ejecutando {sensor}...")
+    for sensor_file, dispatch_key in sensor_map.items():
+        print(f"🚀 Ejecutando módulo: {dispatch_key}...", file=sys.stderr)
         try:
-            command = f'"{sys.executable}" -u {sensor} --local-only'
-            process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True, encoding='utf-8')
+            # LLAMADA AL DISPATCHER: GaltAI.exe [sensor_key] --local-only
+            # Use specific dispatch key instead of filename
+            command = [sys.executable, dispatch_key, "--local-only"]
+            
+            process = subprocess.Popen(
+                command, 
+                stdout=subprocess.PIPE, 
+                stderr=subprocess.PIPE, 
+                text=True, 
+                encoding='utf-8'
+            )
             stdout, stderr = process.communicate()
             
             # Reconstruct JSON objects
@@ -201,9 +212,9 @@ def run_security_flow():
                     all_data.append(data)
                     count_new += 1
                 except json.JSONDecodeError: continue
-            print(f"   ✅ Datos recolectados: {count_new} eventos.")
+            print(f"   ✅ Datos recolectados: {count_new} eventos.", file=sys.stderr)
         except Exception as e:
-            print(f"   ❌ Fallo en {sensor}: {e}")
+            print(f"   ❌ Fallo en {dispatch_key}: {e}", file=sys.stderr)
             continue
 
     if not all_data: return

@@ -68,14 +68,16 @@ jobs:
       - name: Compile Linux Binary
         run: |
           pyinstaller --onefile --name galt_linux --clean \
+            --hidden-import=dotenv \
             --add-data "sensor_procesos.py:." \
             --add-data "sensor_red.py:." \
             --add-data "sensor_sistema.py:." \
             --add-data "sensor_vulnerabilidades.py:." \
             --add-data "sensor_network_discovery.py:." \
             --add-data "runner.py:." \
+            --add-data "sentinel.py:." \
             --add-data ".env.example:." \
-            sentinel.py
+            main.py
 
       - name: Create Tarball
         run: |
@@ -115,14 +117,16 @@ jobs:
       - name: Compile Mac Binary
         run: |
           pyinstaller --onefile --name galt_mac --clean \
+            --hidden-import=dotenv \
             --add-data "sensor_procesos.py:." \
             --add-data "sensor_red.py:." \
             --add-data "sensor_sistema.py:." \
             --add-data "sensor_vulnerabilidades.py:." \
             --add-data "sensor_network_discovery.py:." \
             --add-data "runner.py:." \
+            --add-data "sentinel.py:." \
             --add-data ".env.example:." \
-            sentinel.py
+            main.py
 
       - name: Create Zip
         run: |

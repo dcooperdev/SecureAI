@@ -113,7 +113,7 @@ def get_netstat_map():
 
 def main():
     parser = argparse.ArgumentParser(description="Galt.ai Process Sensor")
-    parser.add_argument("--local-only", action="store_true", help="Print to stdout")
+    parser.add_argument("--local-only", action="store_true", help="Print result to stdout (JSON)")
     args = parser.parse_args()
 
     PLUGIN_NAME = "sensor_procesos"

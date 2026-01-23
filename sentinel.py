@@ -93,8 +93,15 @@ def main():
             score_before = get_current_score()
             
             # 2. Ejecución del Agente
+            # Llamamos al mismo ejecutable en modo "runner"
+            cmd = [sys.executable, "runner"]
+            
+            # Pasar flag --auto si corresponde
+            if "--auto" in sys.argv or interval > 60: 
+                cmd.append("--auto")
+
             result = subprocess.run(
-                [sys.executable, "runner.py", "--auto"], 
+                cmd, 
                 capture_output=True, 
                 text=True, 
                 encoding='utf-8'
