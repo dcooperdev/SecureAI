@@ -20,7 +20,13 @@ args = [
     '--onefile',
     '--noconfirm',
     '--clean',
-    '--hidden-import=dotenv',               # <--- FIX DEPENDENCIA
+    '--hidden-import=dotenv',
+    '--hidden-import=google',
+    '--hidden-import=google.genai',
+    '--hidden-import=google.api_core',
+    '--hidden-import=google.auth',
+    '--hidden-import=google.ai',
+    '--hidden-import=grpc',               # Usually needed by google.api_core
     # Incluimos todo el código fuente como data por seguridad
     f'--add-data=sensor_*.py{sep}.',
     f'--add-data=runner.py{sep}.',

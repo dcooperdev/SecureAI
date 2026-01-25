@@ -12,8 +12,8 @@ def validate_key(key):
     if not key or len(key) < 20: return False
     try:
         client = genai.Client(api_key=key)
-        # List models is a cheap/fast call to verify auth
-        list(client.models.list(config={"page_size": 1}))
+        # Optimized: Fetch only the first item to verify auth, don't consume all pages
+        next(iter(client.models.list(config={"page_size": 1})), None)
         return True
     except Exception as e:
         # Catching generic exception because auth errors can vary

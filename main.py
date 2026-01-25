@@ -36,13 +36,13 @@ def dispatch():
                 logging.warning("API Key detectada pero inválida.")
 
         if not current_key or not is_valid:
-            logging.warning("Iniciando asistente de configuración strict.")
+            logging.warning("Iniciando asistente de configuración...")
             success = onboarding.prompt_for_key()
             if not success:
                 logging.error("Configuración cancelada o fallida. Saliendo.")
                 sys.exit(1)
         else:
-            logging.info("API Key válida y opertaiva. Iniciando servicio.")
+            logging.info(f"API Key válida detectada ({current_key[:4]}...{current_key[-4:]}). Iniciando servicio.")
     # -----------------------------
 
     if len(sys.argv) == 1:

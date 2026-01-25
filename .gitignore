@@ -7,3 +7,7 @@ __pycache__
 # Logs
 logs
 reports
+
+# PyInstaller
+build/
+dist/

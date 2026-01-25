@@ -10,6 +10,9 @@ def setup_logging():
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[logging.StreamHandler(sys.stderr)]
     )
+    # Silenciar logs ruidosos de librerías externas
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 def get_storage_path(subdir=""):
     """
