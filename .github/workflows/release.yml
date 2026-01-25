@@ -35,14 +35,11 @@ jobs:
         run: python build_windows.py
 
       - name: Extract Version
-        shell: bash
+        shell: pwsh
         run: |
-          # Extraer el nombre del tag (ej: v3.4.2)
-          TAG_NAME=${GITHUB_REF#refs/tags/}
-          # Quitar la 'v' inicial si existe para que quede limpio (3.4.2)
-          VERSION=${TAG_NAME#v}
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "Detected version: $VERSION"
+          $tag = $env:GITHUB_REF -replace "refs/tags/v", ""
+          echo "VERSION=$tag" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
+          Write-Host "Version detected: $tag"
 
       - name: Compile Installer (ISCC)
         # Inyectamos la variable VERSION en Inno Setup

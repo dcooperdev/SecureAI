@@ -1,7 +1,7 @@
 ; installer/galt_setup.iss
 #define MyAppName "Galt.ai Security Suite"
 #ifndef MyAppVersion
-  #define MyAppVersion "3.0.5"
+  #define MyAppVersion "Unknown"
 #endif
 #define MyAppPublisher "Galt.ai Security Division"
 #define MyAppExeName "GaltAI_Agent.exe"
