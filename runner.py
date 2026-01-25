@@ -239,7 +239,7 @@ def run_security_flow():
     if security_score < 0: security_score = 0
     
     # 4. Persistence & Drift
-    vault_dir = "vault"
+    vault_dir = get_storage_path("vault")
     if not os.path.exists(vault_dir): os.makedirs(vault_dir)
     state_file = os.path.join(vault_dir, "security_state.json")
     
