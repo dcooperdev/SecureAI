@@ -12,31 +12,19 @@ import sensor_red
 import sensor_sistema
 import sensor_vulnerabilidades
 import sensor_network_discovery
+from config import get_api_key
+import onboarding
 
 setup_logging()
 
 def dispatch():
     # Vital fix for Windows infinite loop with PyInstaller
     multiprocessing.freeze_support()
-import runner
-import sensor_procesos
-import sensor_red
-import sensor_sistema
-import sensor_vulnerabilidades
-import sensor_network_discovery
 
-# --- IO SANITATION: SILENT MODE ---
-# Configurar logging para que vaya a STDERR. 
-# STDOUT debe quedar LIBRE exclusivamente para payloads JSON.
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler(sys.stderr)]
-)
-
-def dispatch():
-    # Vital fix for Windows infinite loop with PyInstaller
-    multiprocessing.freeze_support()
+    # CHEQUEO DE ONBOARDING
+    if len(sys.argv) == 1 or (len(sys.argv) > 1 and sys.argv[1] == "sentinel"):
+         if not get_api_key():
+            onboarding.prompt_for_key()
 
     if len(sys.argv) == 1:
         # Default behavior: Sentinel Mode

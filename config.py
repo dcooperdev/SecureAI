@@ -35,3 +35,19 @@ def get_storage_path(subdir=""):
             print(f"Error creando directorio {target_dir}: {e}", file=sys.stderr)
     
     return target_dir
+    return target_dir
+
+from dotenv import load_dotenv
+
+# Cargar variables desde el ProgramData/Home
+storage_path = get_storage_path()
+env_path = os.path.join(storage_path, ".env")
+load_dotenv(env_path)
+
+def get_api_key():
+    return os.getenv("GOOGLE_API_KEY")
+
+def save_api_key(key):
+    with open(env_path, "w") as f:
+        f.write(f"GOOGLE_API_KEY={key}\n")
+    os.environ["GOOGLE_API_KEY"] = key

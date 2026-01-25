@@ -15,42 +15,25 @@ if sys.stdout.encoding.lower() != 'utf-8':
 from datetime import datetime
 from google import genai
 from dotenv import load_dotenv
-from config import get_storage_path
+from config import get_storage_path, get_api_key
 
 load_dotenv()
 
 # --- CONFIGURACIÓN Y UTILIDADES ---
 
-def check_configuration():
-    """Verifica la configuración y asiste al usuario si falta la API Key."""
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key or api_key.strip() == "tu_api_key_secreta_aqui" or api_key.strip() == "":
-        if sys.stdin and sys.stdin.isatty():
-            print("\n" + "!"*60)
-            print("⚠️  CONFIGURACIÓN INICIAL REQUERIDA")
-            print("   Para operar, Galt.ai necesita acceder a Google Gemini API.")
-            print("   👉 Obtén tu llave gratis aquí: https://aistudio.google.com/")
-            print("!"*60 + "\n")
-            try:
-                key_input = input("🔑 Ingresa tu Google API Key (y presiona Enter): ").strip()
-                if len(key_input) > 20: 
-                    with open(".env", "w", encoding="utf-8") as f:
-                        f.write("# --- Galt.ai Configuration ---\n")
-                        f.write(f"GOOGLE_API_KEY={key_input}\n")
-                        f.write("SCAN_INTERVAL_SECONDS=3600\n")
-                        f.write("LOG_LEVEL=INFO\n")
-                    os.environ["GOOGLE_API_KEY"] = key_input
-                    return key_input
-                else:
-                    sys.exit(1)
-            except Exception:
-                 sys.exit(1)
-        else:
-            print("❌ Error: GOOGLE_API_KEY no configurada en .env")
-            sys.exit(1)
-    return api_key
+# --- CONFIGURACIÓN Y UTILIDADES ---
 
-client = genai.Client(api_key=check_configuration())
+api_key = get_api_key()
+# Configure client safely - if no key, calls will fail and be caught in the try/except block later
+if api_key:
+    client = genai.Client(api_key=api_key)
+else:
+    # Objeto dummy o manejaremos error en uso
+    class DummyClient:
+        class models:
+            def generate_content(*args, **kwargs):
+                raise ValueError("API Key no configurada")
+    client = DummyClient()
 
 def save_json_data(data):
     """Guarda la telemetría estructurada en JSON para futura migración a Firebase."""
@@ -282,13 +265,22 @@ def run_security_flow():
         "4. Proporciona comandos PowerShell exactos en la sección 'ACCIONES DE 5 MINUTOS'.\n"
     )
     
+    report_text = "⚠️ **Análisis de IA no disponible.**\n\nNo se pudo conectar con Gemini AI. Revise su conexión a internet o su API Key.\nSe muestran los datos crudos a continuación."
+    
     try:
+        if not os.getenv("GOOGLE_API_KEY"):
+             raise ValueError("Sin API Key configurada.")
+             
         response = client.models.generate_content(
             model="gemini-2.0-flash", 
             contents=f"{SYSTEM_PROMPT}\n\nPREVIO:\n{json.dumps(previous_findings)}\n\nACTUAL:\n{json.dumps(all_data)}"
         )
         report_text = response.text
-        
+    except Exception as e:
+        print(f"⚠️ Error generando análisis AI: {e}", file=sys.stderr)
+        report_text += f"\n\nError técnico: {e}"
+
+    try:
         # 6. Save Data & Dashboard
         final_payload = {
             "client_id": "LOCAL_PIONEER_TEST",
@@ -329,7 +321,7 @@ def run_security_flow():
                 print(f"Error abriendo navegador: {e}")
 
     except Exception as e:
-        print(f"❌ Error en flujo AI/Reporte: {e}")
+        print(f"❌ Error en flujo Reporte/Guardado: {e}")
 
 if __name__ == "__main__":
     run_security_flow()
