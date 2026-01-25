@@ -48,6 +48,15 @@ def get_api_key():
     return os.getenv("GOOGLE_API_KEY")
 
 def save_api_key(key):
-    with open(env_path, "w") as f:
-        f.write(f"GOOGLE_API_KEY={key}\n")
+    # 1. Guardar en disco
+    try:
+        with open(env_path, "w") as f:
+            f.write(f"GOOGLE_API_KEY={key}\n")
+    except Exception as e:
+        logging.error(f"No se pudo escribir .env: {e}")
+
+    # 2. Actualizar entorno en memoria (CRÍTICO para que main.py lo vea ya mismo)
     os.environ["GOOGLE_API_KEY"] = key
+    
+    # 3. Recargar dotenv si es necesario
+    load_dotenv(env_path, override=True)

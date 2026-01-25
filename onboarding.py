@@ -4,28 +4,34 @@ from config import save_api_key
 import sys
 
 def prompt_for_key():
-    """Lanza una ventana nativa pidiendo la API Key."""
-    # Evitar ventana principal vacía
+    """Lanza una ventana modal forzada en primer plano."""
+    logging.info("Iniciando Onboarding GUI...")
+    
     root = tk.Tk()
-    root.withdraw() 
+    root.withdraw() # Ocultar la ventana base fea
     
-    # Asegurar que la ventana aparezca al frente
+    # TRUCO: Hacer que la ventana sea invisible pero "TopMost" para que el dialog herede eso
     root.attributes('-topmost', True)
+    root.lift()
+    root.focus_force()
     
+    # Usar el diálogo estándar
     key = simpledialog.askstring(
-        "Galt.ai Setup", 
-        "Bienvenido a Galt.ai Security.\n\nPara generar reportes con IA, necesitamos tu Google Gemini API Key.\nPor favor, ingrésala aquí:",
+        "Configuración Galt.ai", 
+        "⚠️ CONFIGURACIÓN REQUERIDA ⚠️\n\nGoogle Gemini API Key no detectada.\nPara generar reportes con IA, ingresa tu llave aquí:",
         parent=root
     )
     
-    if key:
-        save_api_key(key.strip())
-        messagebox.showinfo("Galt.ai", "Configuración guardada exitosamente.")
-        root.destroy()
+    # Destruir la raíz de tkinter para liberar memoria
+    root.destroy()
+    
+    if key and key.strip():
+        clean_key = key.strip()
+        save_api_key(clean_key)
+        logging.info("API Key guardada correctamente.")
         return True
     else:
-        messagebox.showwarning("Galt.ai", "Sin API Key, los reportes serán limitados (sin análisis IA).")
-        root.destroy()
+        logging.warning("El usuario canceló el ingreso de la API Key.")
         return False
 
 if __name__ == "__main__":

@@ -21,10 +21,20 @@ def dispatch():
     # Vital fix for Windows infinite loop with PyInstaller
     multiprocessing.freeze_support()
 
-    # CHEQUEO DE ONBOARDING
-    if len(sys.argv) == 1 or (len(sys.argv) > 1 and sys.argv[1] == "sentinel"):
-         if not get_api_key():
+    # --- LOGICA DE ONBOARDING ---
+    # Solo ejecutar si NO hay argumentos (doble click) o es modo sentinel explícito.
+    # Evita bloquear al runner si se ejecuta automáticmente.
+    is_interactive = len(sys.argv) == 1 or (len(sys.argv) > 1 and sys.argv[1] == "sentinel")
+    
+    current_key = get_api_key()
+    
+    if is_interactive:
+        if not current_key or str(current_key).strip() == "":
+            logging.warning("API Key no encontrada. Lanzando asistente.")
             onboarding.prompt_for_key()
+        else:
+            logging.info("API Key detectada. Iniciando servicio.")
+    # -----------------------------
 
     if len(sys.argv) == 1:
         # Default behavior: Sentinel Mode
