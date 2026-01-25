@@ -34,10 +34,20 @@ jobs:
       - name: Compile EXE
         run: python build_windows.py
 
-      - name: Compile Installer (ISCC)
-        # Usamos el compilador nativo directamente, sin intermediarios
+      - name: Extract Version
+        shell: bash
         run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer/galt_setup.iss
+          # Extraer el nombre del tag (ej: v3.4.2)
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          # Quitar la 'v' inicial si existe para que quede limpio (3.4.2)
+          VERSION=${TAG_NAME#v}
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Detected version: $VERSION"
+
+      - name: Compile Installer (ISCC)
+        # Inyectamos la variable VERSION en Inno Setup
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion="${{ env.VERSION }}" installer/galt_setup.iss
 
       - name: Upload Windows Setup
         uses: actions/upload-artifact@v4 # ACTUALIZADO A v4
