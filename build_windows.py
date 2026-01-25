@@ -27,6 +27,16 @@ args = [
     '--hidden-import=google.auth',
     '--hidden-import=google.ai',
     '--hidden-import=grpc',               # Usually needed by google.api_core
+    # FIX: Google Namespace Packages (Required for CI/CD builds)
+    '--hidden-import=google',
+    '--hidden-import=google.generativeai',
+    '--hidden-import=google.generativeai.types',
+    '--hidden-import=google.generativeai.notebook',
+    # Common missing networking deps in CI
+    '--hidden-import=requests',
+    '--hidden-import=idna',
+    '--hidden-import=urllib3',
+    '--hidden-import=certifi',
     '--additional-hooks-dir=hooks',
     '--runtime-hook=runtime_hook.py',     # <--- FORCE RUNTIME IMPORT
     # Incluimos todo el código fuente como data por seguridad

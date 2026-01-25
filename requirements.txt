@@ -3,3 +3,6 @@ requests
 google-genai
 python-dotenv
 pyinstaller
+google-generativeai
+google-api-core
+google-auth
