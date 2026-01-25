@@ -25,6 +25,7 @@ args = [
     f'--add-data=sensor_*.py{sep}.',
     f'--add-data=runner.py{sep}.',
     f'--add-data=sentinel.py{sep}.',
+    f'--add-data=config.py{sep}.',
     f'--add-data=.env.example{sep}.',
     '--console',
 ]

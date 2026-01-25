@@ -5,7 +5,7 @@ import json
 import sys
 from datetime import datetime
 from dotenv import load_dotenv
-from main import get_storage_path
+from config import get_storage_path
 
 # Force UTF-8 on Windows
 if sys.stdout.encoding.lower() != 'utf-8':

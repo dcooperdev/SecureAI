@@ -15,7 +15,7 @@ if sys.stdout.encoding.lower() != 'utf-8':
 from datetime import datetime
 from google import genai
 from dotenv import load_dotenv
-from main import get_storage_path
+from config import get_storage_path
 
 load_dotenv()
 
@@ -157,7 +157,7 @@ def generate_dashboard_html(score, report_md, json_path, client_id="LOCAL_PIONEE
     </html>
     """
     
-    """
+
     
     reports_dir = get_storage_path("reports")
     path = os.path.join(reports_dir, "dashboard.html")
@@ -270,17 +270,17 @@ def run_security_flow():
     print(f"\n🧠 Galt.ai Intelligence: Analizando con Gemini 2.0 Flash...")
     print(f"📊 Score: {security_score}/100 (Anterior: {previous_score})")
 
-    SYSTEM_PROMPT = f"""
-    ROL: CISO Virtual Galt.ai.
-    CONTEXTO: {change_context}
-    SCORE: {security_score}/100
-    
-    INSTRUCCIONES:
-    1. Compara la telemetría actual con la anterior.
-    2. Si el score bajó, explica POR QUÉ (qué puerto/proceso apareció).
-    3. Si detectas 'Sistemas Espejo' (mismo puerto abierto en local y red), alerta sobre Riesgo Sistémico.
-    4. Proporciona comandos PowerShell exactos en la sección 'ACCIONES DE 5 MINUTOS'.
-    """
+    SYSTEM_PROMPT = (
+        "ROL: CISO Virtual Galt.ai.\n"
+        f"CONTEXTO: {change_context}\n"
+        f"SCORE: {security_score}/100\n"
+        "\n"
+        "INSTRUCCIONES:\n"
+        "1. Compara la telemetría actual con la anterior.\n"
+        "2. Si el score bajó, explica POR QUÉ (qué puerto/proceso apareció).\n"
+        "3. Si detectas 'Sistemas Espejo' (mismo puerto abierto en local y red), alerta sobre Riesgo Sistémico.\n"
+        "4. Proporciona comandos PowerShell exactos en la sección 'ACCIONES DE 5 MINUTOS'.\n"
+    )
     
     try:
         response = client.models.generate_content(
