@@ -115,7 +115,7 @@ def main():
                 print(result.stderr)
             else:
                 for line in result.stdout.splitlines():
-                    if "Score:" in line or "DRIFT" in line or "Modo Silencioso" in line:
+                    if any(x in line for x in ["Score:", "DRIFT", "Modo Silencioso", "REPORTE", "DASHBOARD", "Abriendo"]):
                         print(f"   > {line.strip()}")
 
             score_after = get_current_score()

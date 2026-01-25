@@ -321,12 +321,12 @@ def run_security_flow():
             print("\n🤫 Modo Silencioso: Sin cambios críticos. Dashboard actualizado en background.")
 
         if should_open:
-            print(f"📊 Abriendo reporte: {dashboard_path}", file=sys.stderr)
+            print(f"   Abriendo reporte: {dashboard_path}")
             try:
                 # Forzar ruta absoluta para el navegador
                 webbrowser.open(f"file://{os.path.abspath(dashboard_path)}")
             except Exception as e:
-                print(f"Error abriendo navegador: {e}", file=sys.stderr)
+                print(f"Error abriendo navegador: {e}")
 
     except Exception as e:
         print(f"❌ Error en flujo AI/Reporte: {e}")
