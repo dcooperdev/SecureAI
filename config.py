@@ -40,9 +40,15 @@ def get_storage_path(subdir=""):
 from dotenv import load_dotenv
 
 # Cargar variables desde el ProgramData/Home
+# Cargar variables desde el ProgramData/Home
 storage_path = get_storage_path()
 env_path = os.path.join(storage_path, ".env")
 load_dotenv(env_path)
+
+# FALLBACK: Cargar desde el directorio actual (útil para desarrollo/test)
+local_env_path = os.path.join(os.getcwd(), ".env")
+if os.path.exists(local_env_path):
+    load_dotenv(local_env_path)
 
 def get_api_key():
     return os.getenv("GOOGLE_API_KEY")

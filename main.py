@@ -23,7 +23,6 @@ def dispatch():
 
     # --- LOGICA DE ONBOARDING ---
     # Solo ejecutar si NO hay argumentos (doble click) o es modo sentinel explícito.
-    # Evita bloquear al runner si se ejecuta automáticmente.
     is_interactive = len(sys.argv) == 1 or (len(sys.argv) > 1 and sys.argv[1] == "sentinel")
     
     current_key = get_api_key()
@@ -31,7 +30,10 @@ def dispatch():
     if is_interactive:
         if not current_key or str(current_key).strip() == "":
             logging.warning("API Key no encontrada. Lanzando asistente.")
-            onboarding.prompt_for_key()
+            success = onboarding.prompt_for_key()
+            if not success:
+                logging.error("Usuario canceló la configuración. Abortando.")
+                sys.exit(1)
         else:
             logging.info("API Key detectada. Iniciando servicio.")
     # -----------------------------
