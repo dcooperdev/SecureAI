@@ -4,6 +4,31 @@ import logging
 import json
 import os
 # Import modules explicitly for PyInstaller analysis
+import platform
+
+def get_storage_path(subdir=""):
+    """
+    Retorna una ruta absoluta y escribible para datos.
+    Windows: C:\ProgramData\GaltAI\{subdir}
+    Mac/Linux: /Users/{user}/.galt/{subdir}
+    """
+    system = platform.system()
+    if system == "Windows":
+        base = os.getenv('PROGRAMDATA', os.getenv('APPDATA'))
+        root_dir = os.path.join(base, "GaltAI")
+    else:
+        root_dir = os.path.join(os.path.expanduser("~"), ".galt")
+    
+    target_dir = os.path.join(root_dir, subdir)
+    
+    # Asegurar que el directorio exista
+    if not os.path.exists(target_dir):
+        try:
+            os.makedirs(target_dir, exist_ok=True)
+        except Exception as e:
+            logging.error(f"Error creando directorio {target_dir}: {e}")
+    
+    return target_dir
 import sentinel
 import runner
 import sensor_procesos

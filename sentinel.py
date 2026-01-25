@@ -5,6 +5,7 @@ import json
 import sys
 from datetime import datetime
 from dotenv import load_dotenv
+from main import get_storage_path
 
 # Force UTF-8 on Windows
 if sys.stdout.encoding.lower() != 'utf-8':
@@ -14,7 +15,8 @@ if sys.stdout.encoding.lower() != 'utf-8':
         pass
 
 load_dotenv()
-VAULT_FILE = "vault/security_state.json"
+vault_dir = get_storage_path("vault")
+VAULT_FILE = os.path.join(vault_dir, "security_state.json")
 
 # --- CONFIGURACIÓN COMERCIAL ---
 # En el futuro, esto vendrá de Firebase Remote Config

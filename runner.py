@@ -15,6 +15,7 @@ if sys.stdout.encoding.lower() != 'utf-8':
 from datetime import datetime
 from google import genai
 from dotenv import load_dotenv
+from main import get_storage_path
 
 load_dotenv()
 
@@ -53,8 +54,9 @@ client = genai.Client(api_key=check_configuration())
 
 def save_json_data(data):
     """Guarda la telemetría estructurada en JSON para futura migración a Firebase."""
-    if not os.path.exists("reports/data"): os.makedirs("reports/data")
-    filename = f"reports/data/scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    reports_dir = get_storage_path("reports/data")
+    if not os.path.exists(reports_dir): os.makedirs(reports_dir)
+    filename = os.path.join(reports_dir, f"scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
     return filename
@@ -155,8 +157,12 @@ def generate_dashboard_html(score, report_md, json_path, client_id="LOCAL_PIONEE
     </html>
     """
     
-    path = "reports/dashboard.html"
-    if not os.path.exists("reports"): os.makedirs("reports")
+    """
+    
+    reports_dir = get_storage_path("reports")
+    path = os.path.join(reports_dir, "dashboard.html")
+    if not os.path.exists(reports_dir): os.makedirs(reports_dir)
+    
     with open(path, "w", encoding="utf-8") as f:
         f.write(html_content)
     return os.path.abspath(path)
@@ -315,8 +321,12 @@ def run_security_flow():
             print("\n🤫 Modo Silencioso: Sin cambios críticos. Dashboard actualizado en background.")
 
         if should_open:
-            print("🌐 Abriendo Dashboard en navegador...")
-            webbrowser.open(f"file://{dashboard_path}")
+            print(f"📊 Abriendo reporte: {dashboard_path}", file=sys.stderr)
+            try:
+                # Forzar ruta absoluta para el navegador
+                webbrowser.open(f"file://{os.path.abspath(dashboard_path)}")
+            except Exception as e:
+                print(f"Error abriendo navegador: {e}", file=sys.stderr)
 
     except Exception as e:
         print(f"❌ Error en flujo AI/Reporte: {e}")
