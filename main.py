@@ -25,17 +25,24 @@ def dispatch():
     # Solo ejecutar si NO hay argumentos (doble click) o es modo sentinel explícito.
     is_interactive = len(sys.argv) == 1 or (len(sys.argv) > 1 and sys.argv[1] == "sentinel")
     
-    current_key = get_api_key()
-    
     if is_interactive:
-        if not current_key or str(current_key).strip() == "":
-            logging.warning("API Key no encontrada. Lanzando asistente.")
+        current_key = get_api_key()
+        # Validar la llave existente
+        is_valid = False
+        if current_key:
+            logging.info("Verificando validez de API Key...")
+            is_valid = onboarding.validate_key(current_key)
+            if not is_valid:
+                logging.warning("API Key detectada pero inválida.")
+
+        if not current_key or not is_valid:
+            logging.warning("Iniciando asistente de configuración strict.")
             success = onboarding.prompt_for_key()
             if not success:
-                logging.error("Usuario canceló la configuración. Abortando.")
+                logging.error("Configuración cancelada o fallida. Saliendo.")
                 sys.exit(1)
         else:
-            logging.info("API Key detectada. Iniciando servicio.")
+            logging.info("API Key válida y opertaiva. Iniciando servicio.")
     # -----------------------------
 
     if len(sys.argv) == 1:

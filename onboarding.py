@@ -2,37 +2,87 @@ import tkinter as tk
 from tkinter import simpledialog, messagebox
 from config import save_api_key
 import sys
+import logging
 
-def prompt_for_key():
-    """Lanza una ventana modal forzada en primer plano."""
-    logging.info("Iniciando Onboarding GUI...")
+from google import genai
+from google.api_core.exceptions import GoogleAPIError
+
+def validate_key(key):
+    """Intenta una llamada mínima para verificar la API Key."""
+    if not key or len(key) < 20: return False
+    try:
+        client = genai.Client(api_key=key)
+        # List models is a cheap/fast call to verify auth
+        list(client.models.list(config={"page_size": 1}))
+        return True
+    except Exception as e:
+        # Catching generic exception because auth errors can vary
+        logging.warning(f"API Key validation failed: {e}")
+        return False
+
+def prompt_for_key(force_cli=False):
+    """
+    Solicita la API Key.
+    Prioriza CLI si es interactivo, sino usa GUI.
+    """
+    logging.info("Iniciando Onboarding...")
     
+    # 1. Modo CLI (Consola)
+    if sys.stdin.isatty() or force_cli:
+        print("\n" + "="*50)
+        print("⚠️  CONFIGURACIÓN REQUERIDA DE GALT.AI  ⚠️")
+        print("="*50)
+        print("No se detectó una API Key válida de Google Gemini.")
+        print("Para continuar, necesitas una llave de: https://aistudio.google.com/\n")
+        
+        while True:
+            try:
+                key = input("🔑 Ingresa tu API Key (o Ctrl+C para salir): ").strip()
+                if not key: continue
+                
+                print("Validando llave...", end="\r")
+                if validate_key(key):
+                    print("✅ Llave válida! Guardando config...")
+                    save_api_key(key)
+                    return True
+                else:
+                    print("❌ Llave inválida o error de conexión. Intenta de nuevo.")
+            except KeyboardInterrupt:
+                print("\nOperación cancelada.")
+                return False
+            except EOFError:
+                return False
+
+    # 2. Modo GUI (Tkinter) - Fallback
     root = tk.Tk()
     root.withdraw() # Ocultar la ventana base fea
     
-    # TRUCO: Hacer que la ventana sea invisible pero "TopMost" para que el dialog herede eso
+    # TRUCO: Hacer que la ventana sea invisible pero "TopMost"
     root.attributes('-topmost', True)
     root.lift()
     root.focus_force()
     
-    # Usar el diálogo estándar
-    key = simpledialog.askstring(
-        "Configuración Galt.ai", 
-        "⚠️ CONFIGURACIÓN REQUERIDA ⚠️\n\nGoogle Gemini API Key no detectada.\nPara generar reportes con IA, ingresa tu llave aquí:",
-        parent=root
-    )
-    
-    # Destruir la raíz de tkinter para liberar memoria
-    root.destroy()
-    
-    if key and key.strip():
+    while True:
+        key = simpledialog.askstring(
+            "Configuración Galt.ai", 
+            "⚠️ CONFIGURACIÓN REQUERIDA ⚠️\n\nGoogle Gemini API Key no detectada o inválida.\nPara generar reportes con IA, ingresa tu llave aquí:",
+            parent=root
+        )
+        
+        if not key:
+            root.destroy()
+            return False
+            
         clean_key = key.strip()
-        save_api_key(clean_key)
-        logging.info("API Key guardada correctamente.")
-        return True
-    else:
-        logging.warning("El usuario canceló el ingreso de la API Key.")
-        return False
+        if validate_key(clean_key):
+            save_api_key(clean_key)
+            root.destroy()
+            return True
+        else:
+            retry = messagebox.askretrycancel("Error", "La API Key ingresada no es válida.\n¿Reintentar?", parent=root)
+            if not retry:
+                root.destroy()
+                return False
 
 if __name__ == "__main__":
     prompt_for_key()
