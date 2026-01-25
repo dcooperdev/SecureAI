@@ -27,6 +27,7 @@ args = [
     '--hidden-import=google.auth',
     '--hidden-import=google.ai',
     '--hidden-import=grpc',               # Usually needed by google.api_core
+    '--additional-hooks-dir=hooks',       # <--- USE CUSTOM HOOKS
     # Incluimos todo el código fuente como data por seguridad
     f'--add-data=sensor_*.py{sep}.',
     f'--add-data=runner.py{sep}.',

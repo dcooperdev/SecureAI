@@ -26,7 +26,7 @@ scan_results = [
 ]
 
 response = client.models.generate_content(
-    model="gemini-3-flash-preview",
+    model="gemini-2.0-flash-lite",
     contents=f"Analiza estos hallazgos y genera el reporte:\n\n{json.dumps(scan_results)}"
 )
 
