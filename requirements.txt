@@ -10,3 +10,6 @@ pystray
 Pillow
 pywin32; sys_platform == 'win32'
 plyer
+pytest
+pytest-mock
+coverage

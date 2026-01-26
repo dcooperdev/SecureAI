@@ -151,7 +151,9 @@ def run_security_flow():
             print(f"   ❌ Fallo en {dispatch_key}: {e}", file=sys.stderr)
             continue
 
-    if not all_data: return
+    if not all_data:
+        status_manager.update_status("IDLE", "No se detectaron datos")
+        return
 
     # 3. Scoring
     security_score = 100
