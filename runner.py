@@ -17,6 +17,8 @@ from datetime import datetime
 from google import genai
 from dotenv import load_dotenv
 from config import get_storage_path, get_api_key
+from reports.narrator import OfflineNarrator
+from src.utils.report_formatter import GaltReportFormatter
 import status_manager
 
 load_dotenv()
@@ -221,17 +223,27 @@ def run_security_flow():
         report_text = response.text
     except Exception as e:
         print(f"⚠️ Error generando análisis AI: {e}", file=sys.stderr)
-        error_msg = str(e)
-        if "400" in error_msg or "INVALID_ARGUMENT" in error_msg or "Sin API Key" in error_msg:
-            report_text = """
-            <div style="color: #fb6340; border-left: 3px solid #fb6340; padding-left: 10px;">
-                <h3>⚠️ Modo Offline</h3>
-                <p>No se pudo conectar con la IA de Google. Esto suele deberse a una <b>API Key faltante o inválida</b>.</p>
-                <p>El sistema sigue funcionando en modo de detección local.</p>
-            </div>
-            """
-        else:
-            report_text += f"\n\n<p>Error de conexión con IA: {error_msg}</p>"
+        
+        # FALLBACK: Offline Narrator
+        print("   🔄 Activando Narrador Offline para generar reporte...")
+        narrator = OfflineNarrator()
+        
+        # Preparar datos para el narrador
+        narrator_data = {
+            "score": security_score,
+            "findings": all_data
+        }
+        
+        report_text = narrator.generate_summary(narrator_data)
+        print("   ✅ Reporte offline generado.")
+
+    # 5.5 Apply HTML Formatting (Backend Side)
+    try:
+        formatter = GaltReportFormatter()
+        report_text = formatter.to_html(report_text)
+        print("DEBUG HTML OUTPUT:", report_text[:100] + "...") # Preview
+    except Exception as e:
+        print(f"⚠️ Error formatting HTML: {e}")
 
     try:
         # 6. Save Data & Dashboard

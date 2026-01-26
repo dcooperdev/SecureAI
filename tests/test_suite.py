@@ -76,5 +76,17 @@ class TestGaltSuite(unittest.TestCase):
                 self.assertIn("result", extracted_data, f"{sensor} missing result")
                 print(f"      ✅ {sensor} passed JSON validation.")
 
+
+import pytest
+from unittest.mock import MagicMock
+
+# DISABLE GLOBAL MOCK FOR THIS FILE
+@pytest.fixture(autouse=True)
+def mock_subprocess():
+    """
+    Override global mock to allow real subprocess calls in this integration test.
+    """
+    yield MagicMock()
+
 if __name__ == "__main__":
     unittest.main()

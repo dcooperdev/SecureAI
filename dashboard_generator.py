@@ -6,7 +6,9 @@ from config import get_storage_path
 
 def get_html_template(current_data, history_links, logo_path_abs, current_json_path=None):
     # 1. Recolectar Historial
-    reports_path = os.path.join(get_storage_path("reports"), "data")
+    reports_path = get_storage_path("reports/data")
+    if not os.path.exists(reports_path): os.makedirs(reports_path)
+    
     json_files = glob.glob(os.path.join(reports_path, "scan_*.json"))
     json_files.sort(key=os.path.getmtime, reverse=True)
     
@@ -46,8 +48,9 @@ def get_html_template(current_data, history_links, logo_path_abs, current_json_p
     <head>
         <meta charset="UTF-8">
         <title>Galt.ai Security Center</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <style>
-            :root {{ --bg: #0f0f13; --sidebar: #18181f; --text: #e0e0e0; --accent: #2dce89; }}
+            :root {{ --bg: #0f0f13; --sidebar: #18181f; --text: #e0e0e0; --accent: #2dce89; --danger: #f5365c; --warning: #fb6340; }}
             body {{ margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }}
             
             /* Sidebar */
@@ -78,26 +81,50 @@ def get_html_template(current_data, history_links, logo_path_abs, current_json_p
             .report-title {{ font-size: 24px; color: white; margin: 0; }}
             .report-subtitle {{ color: #888; font-size: 14px; margin-top: 5px; }}
             
-            .refresh-btn {{ background:#333; color:white; border:none; padding:8px 15px; cursor:pointer; border-radius:4px; font-size:12px; }}
-            .refresh-btn:hover {{ background:#444; }}
-
             /* Cards */
-            .grid {{ display: grid; grid-template-columns: 250px 1fr; gap: 30px; }}
+            .grid {{ display: grid; grid-template-columns: 280px 1fr; gap: 30px; align-items: start; }}
             .card {{ background: #18181f; border-radius: 12px; padding: 25px; border: 1px solid #2a2a35; }}
             
-            .score-big {{ font-size: 64px; font-weight: bold; color: white; text-align: center; line-height: 1; }}
-            .score-label {{ text-align: center; color: #666; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-top: 10px; }}
+            /* Eliminamos height: 100% y usamos height: auto */
+            .score-card {{
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: auto;
+                padding: 40px 20px;
+                min-height: auto;
+            }}
+            .score-big {{ font-size: 80px; font-weight: 800; color: white; text-align: center; line-height: 1; text-shadow: 0 0 20px rgba(0,0,0,0.5); }}
+            .score-label {{ text-align: center; color: #888; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-top: 15px; font-weight: 600; }}
             
             .ai-box h3 {{ margin-top: 0; color: var(--accent); display: flex; align-items: center; gap: 10px; }}
             .ai-content {{ line-height: 1.6; color: #ccc; font-size: 15px; }}
             
-            /* Error Box Styling */
-            .error-box {{ background: #2d1b1b; border-left: 4px solid #f5365c; padding: 15px; border-radius: 4px; color: #ffadad; }}
+            /* Fallback Cards */
+            .threat-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 20px; }}
+            .threat-card {{ background: #22222b; border: 1px solid #333; border-radius: 8px; padding: 15px; display: flex; gap: 15px; align-items: flex-start; }}
+            .threat-icon {{ width: 40px; height: 40px; background: #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #fff; flex-shrink: 0; }}
+            .threat-body h4 {{ margin: 0 0 5px 0; color: #fff; font-size: 14px; }}
+            .threat-body p {{ margin: 0; color: #888; font-size: 12px; line-height: 1.4; }}
             
-            pre {{ background: #000; padding: 15px; border-radius: 6px; color: #0f0; font-size: 11px; overflow-x: auto; margin-top: 20px; }}
+            .badge {{ padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; display: inline-block; margin-top: 8px; }}
+            .badge-high {{ background: rgba(245, 54, 92, 0.2); color: #f5365c; border: 1px solid rgba(245, 54, 92, 0.3); }}
+            .badge-medium {{ background: rgba(251, 99, 64, 0.2); color: #fb6340; border: 1px solid rgba(251, 99, 64, 0.3); }}
+            .badge-low {{ background: rgba(45, 206, 137, 0.2); color: #2dce89; border: 1px solid rgba(45, 206, 137, 0.3); }}
+            
+            .empty-state {{ text-align: center; padding: 40px; color: #666; }}
+            .empty-state i {{ font-size: 48px; margin-bottom: 20px; color: var(--accent); opacity: 0.5; }}
+
+            /* Raw Data Accordion */
+            .accordion {{ margin-top: 40px; border-top: 1px solid #333; padding-top: 20px; }}
+            .accordion-btn {{ background: transparent; border: 1px solid #444; color: #888; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }}
+            .accordion-btn:hover {{ border-color: #666; color: #ccc; }}
+            .collapse {{ display: none; margin-top: 15px; }}
+            .collapse.show {{ display: block; }}
+            pre {{ background: #000; padding: 15px; border-radius: 6px; color: #0f0; font-size: 11px; overflow-x: auto; border: 1px solid #333; }}
             
             /* --- STATES --- */
-            /* Scanning State Overlay */
             .overlay-msg {{ 
                 display: none; 
                 position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -107,7 +134,6 @@ def get_html_template(current_data, history_links, logo_path_abs, current_json_p
             }}
             .overlay-msg h2 {{ color: #fb6340; margin: 0 0 10px 0; font-size: 24px; }}
             
-            /* Pulse Animation for Scanning */
             body.state-scanning .sidebar {{ opacity: 0.5; pointer-events: none; }}
             body.state-scanning .content {{ opacity: 0.5; pointer-events: none; }}
             body.state-scanning .overlay-msg {{ display: block; animation: pulse-border 2s infinite; }}
@@ -120,9 +146,6 @@ def get_html_template(current_data, history_links, logo_path_abs, current_json_p
             
             .status-badge {{ background: rgba(255,255,255,0.05); padding: 6px 14px; border-radius: 20px; font-size: 13px; display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.1); }}
             .dot {{ width: 8px; height: 8px; background: #2dce89; border-radius: 50%; box-shadow: 0 0 10px rgba(45, 206, 137, 0.4); }}
-            
-            /* Scanning pulsing dot */
-            @keyframes pulse-red {{ 0% {{ box-shadow: 0 0 0 0 rgba(251, 99, 64, 0.7); }} 70% {{ box-shadow: 0 0 0 10px rgba(251, 99, 64, 0); }} 100% {{ box-shadow: 0 0 0 0 rgba(251, 99, 64, 0); }} }}
         </style>
     </head>
     <body class="state-idle">
@@ -155,21 +178,31 @@ def get_html_template(current_data, history_links, logo_path_abs, current_json_p
                     </div>
                 </div>
 
-                <div class="grid">
-                    <div class="card">
+                <div class="grid" style="display: grid; grid-template-columns: 280px 1fr; gap: 30px; align-items: start !important;">
+                    <!-- Score Card -->
+                    <div class="card score-card">
                         <div id="score-val" class="score-big">--</div>
-                        <div class="score-label">Global Score</div>
+                        <div id="score-text" class="score-label">Securing...</div>
                     </div>
+                    
+                    <!-- Content Card -->
                     <div class="card">
-                        <div class="ai-box">
-                            <div id="ai-body" class="ai-content"></div>
-                        </div>
+                        <!-- AI Analysis or Fallback -->
+                        <div id="ai-body" class="ai-content"></div>
+                        
+                        <!-- Fallback Views -->
+                        <div id="fallback-container" style="display:none;"></div>
                     </div>
                 </div>
 
-                <div style="margin-top: 30px;">
-                    <h4 style="color:#666">Raw Data Inspector</h4>
-                    <pre id="raw-data"></pre>
+                <!-- Raw Data Accordion -->
+                <div class="accordion">
+                    <button class="accordion-btn" onclick="toggleRawData()">
+                        <i class="fas fa-code"></i> Ver Detalles Técnicos (Raw JSON)
+                    </button>
+                    <div id="raw-details" class="collapse">
+                        <pre id="raw-data"></pre>
+                    </div>
                 </div>
             </div>
         </div>
@@ -198,26 +231,109 @@ def get_html_template(current_data, history_links, logo_path_abs, current_json_p
                 const data = historyData[index];
                 const view = document.getElementById('main-view');
                 
+                // Reset View
                 view.classList.remove('fade-in');
                 void view.offsetWidth;
                 view.classList.add('fade-in');
 
                 document.getElementById('report-timestamp').innerText = 'Fecha del Escaneo: ' + data.ui_date_full;
                 
+                // 1. Score Logic
                 const scoreEl = document.getElementById('score-val');
+                const scoreLabel = document.getElementById('score-text');
                 const score = data.score !== undefined ? data.score : 0;
+                
                 scoreEl.innerText = score;
                 scoreEl.style.color = getColor(score);
                 
-                let analysis = data.ai_analysis_markdown || data.ai_analysis || 'Sin análisis disponible.';
-                document.getElementById('ai-body').innerHTML = analysis;
+                if(score >= 90) scoreLabel.innerText = "Sistema Seguro";
+                else if(score >= 60) scoreLabel.innerText = "Precaución";
+                else scoreLabel.innerText = "Estado Crítico";
+
+                // 2. AI vs Fallback Logic
+                const aiBody = document.getElementById('ai-body');
+                const fallbackContainer = document.getElementById('fallback-container');
+                
+                // Detectar si el AI Analysis tiene contenido válido (no solo whitespace o null)
+                let hasAI = data.ai_analysis_markdown && data.ai_analysis_markdown.trim().length > 10;
+                
+                // Si la IA fallo (ej: 'Modo Offline' en el texto), forzamos fallback
+                if(hasAI && (data.ai_analysis_markdown.includes('Modo Offline') || data.ai_analysis_markdown.includes('<div class="error-box">'))) {{
+                    // Renderizamos el error de IA pero TAMBIEN el fallback visual
+                    aiBody.innerHTML = data.ai_analysis_markdown; 
+                    renderFallbackMode(data.findings);
+                    fallbackContainer.style.display = 'grid'; // Mostrar grid
+                }} 
+                else if (hasAI) {{
+                    // Happy Path: IA funcionó
+                    aiBody.innerHTML = data.ai_analysis_markdown;
+                    fallbackContainer.style.display = 'none';
+                }} 
+                else {{
+                    // Fallback Total: No hay IA
+                    aiBody.innerHTML = '';
+                    renderFallbackMode(data.findings);
+                    fallbackContainer.style.display = 'grid';
+                }}
+
+                // 3. Raw Data (Always hidden)
                 document.getElementById('raw-data').innerText = JSON.stringify(data, null, 2);
+            }}
+            
+            function renderFallbackMode(findings) {{
+                const container = document.getElementById('fallback-container');
+                container.innerHTML = '';
+                container.className = 'threat-grid';
+                
+                if (!findings || findings.length === 0) {{
+                     container.className = ''; // Remove grid for single center item
+                     container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-shield-halved"></i>
+                            <h3>Sistema Seguro</h3>
+                            <p>No se han detectado amenazas activas en este escaneo.</p>
+                        </div>
+                     `;
+                     return;
+                }}
+                
+                findings.forEach(f => {{
+                    // Mapeo de Iconos
+                    let icon = 'fa-circle-exclamation';
+                    if(f.module === 'sensor_network_discovery') icon = 'fa-wifi';
+                    if(f.module === 'sensor_procesos') icon = 'fa-microchip';
+                    if(f.module === 'sensor_sistema') icon = 'fa-server';
+                    if(f.module === 'sensor_vulnerabilidades') icon = 'fa-bug';
+                    
+                    // Badge Color
+                    let severity = (f.result.severity || 'LOW').toUpperCase();
+                    let badgeClass = 'badge-low';
+                    if(severity === 'HIGH' || severity === 'CRITICAL') badgeClass = 'badge-high';
+                    if(severity === 'MEDIUM') badgeClass = 'badge-medium';
+                    
+                    const card = document.createElement('div');
+                    card.className = 'threat-card';
+                    card.innerHTML = `
+                        <div class="threat-icon"><i class="fas ${{icon}}"></i></div>
+                        <div class="threat-body">
+                            <h4>${{f.module.replace('sensor_', '').toUpperCase()}}</h4>
+                            <p>${{f.result.details || JSON.stringify(f.result).substring(0, 100)}}</p>
+                            <span class="badge ${{badgeClass}}">${{severity}}</span>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                }});
             }}
 
             function getColor(score) {{
-                if(score >= 80) return '#2dce89';
-                if(score >= 50) return '#fb6340';
-                return '#f5365c';
+                if(score >= 90) return '#2dce89'; // Green
+                if(score >= 60) return '#fb6340'; // Orange/Yellow
+                return '#f5365c'; // Red
+            }}
+            
+            function toggleRawData() {{
+                const el = document.getElementById('raw-details');
+                el.classList.toggle('show');
             }}
 
             if(historyData.length > 0) {{
@@ -227,7 +343,6 @@ def get_html_template(current_data, history_links, logo_path_abs, current_json_p
             
             // --- HEARTBEAT POLLING SYSTEM ---
             let lastState = '';
-
             window.updateDashboardState = function(data) {{
                 const text = document.getElementById('status-text');
                 const dot = document.getElementById('status-dot');
@@ -240,39 +355,39 @@ def get_html_template(current_data, history_links, logo_path_abs, current_json_p
                     text.innerText = 'ESCANEANDO...';
                     text.style.color = '#fb6340';
                     dot.style.background = '#fb6340';
-                    dot.style.animation = 'pulse-red 1s infinite';
-                    badge.style.borderColor = '#fb6340';
                 }} else {{
                     document.body.classList.remove('state-scanning');
                     document.body.classList.add('state-idle');
                     
-                    text.innerText = 'Sistema Activo • ' + data.timestamp;
+                    text.innerText = 'Sistema Activo';
                     text.style.color = '#e0e0e0';
                     dot.style.background = '#2dce89';
-                    dot.style.animation = 'none';
-                    badge.style.borderColor = 'rgba(255,255,255,0.1)';
                     
                     if (lastState === 'SCANNING') {{
-                        console.log("Scan finished. Reloading...");
-                        setTimeout(() => location.reload(), 2000);
+                         setTimeout(() => location.reload(), 2000);
                     }}
                 }}
                 lastState = data.state;
             }};
 
-            // Poll every 1.5 seconds
             setInterval(() => {{
                 const script = document.createElement('script');
                 script.src = 'live_status.js?t=' + Date.now();
-                document.body.appendChild(script);
+                
+                // Auto-destrucción al terminar de cargar (éxito)
                 script.onload = () => script.remove();
+                
+                // Auto-destrucción al fallar
                 script.onerror = () => script.remove();
+                
+                document.body.appendChild(script);
             }}, 1500);
             
         </script>
     </body>
     </html>
     """
+
 
 def generate_history_html(reports_dir):
     """Deprecated."""

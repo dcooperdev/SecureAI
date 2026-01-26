@@ -23,7 +23,7 @@ def test_validation():
         
     # 3. Test Invalid Format Key (but long enough)
     # This effectively tests the Google API call failure handling
-    bad_key = "AIzaSyAd2lhgVDc9CmQX7gXBlTrUj9LAkysApRk_INVALID_SUFFIX"
+    bad_key = "asdasdasdasdasdasdasdasd_INVALID_SUFFIX"
     print(f"Testing bad key: {bad_key}")
     result = validate_key(bad_key)
     print(f"Result for bad key: {result}")
