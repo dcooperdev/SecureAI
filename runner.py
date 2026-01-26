@@ -13,9 +13,11 @@ if sys.stdout.encoding.lower() != 'utf-8':
     except AttributeError:
         pass
 from datetime import datetime
+
 from google import genai
 from dotenv import load_dotenv
 from config import get_storage_path, get_api_key
+import status_manager
 
 load_dotenv()
 
@@ -55,29 +57,25 @@ def generate_dashboard_html(score, report_md, json_path, client_id="LOCAL_PIONEE
         # Determine assets path
         # Build mode: sys._MEIPASS | Script mode: current dir
         base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
-        logo_path = os.path.join(base_path, "logo.png")
+        # Prefer app.ico on Windows if available, else logo.png
+        logo_path = os.path.join(base_path, "app.ico")
+        if not os.path.exists(logo_path):
+             logo_path = os.path.join(base_path, "logo.png")
         
-        # Prepare Data
-        data = {
+        # Ensure absolute path for the file protocol
+        logo_path = os.path.abspath(logo_path)
+             
+        # Mock current data for generator
+        current_data = {
             "score": score,
-            "client_id": client_id,
-            "ai_analysis": report_md # This needs markdown to html conversion if we want rich text, 
-                                     # but for now we inject raw or pre-render in runner if needed.
-                                     # Actually, let's keep it simple.
+            "ai_analysis": report_md
         }
         
-        # We need to convert markdown report_md to HTML for better display? 
-        # For this step, we just wrap it in a pre or div.
-        # But wait, dashboard_generator injects it directly.
+        # HTML Content
+        # We pass json_path so generator interprets it as "current" and ensures it is in history
+        html_content = dashboard_generator.get_html_template(current_data, [], logo_path, current_json_path=json_path)
         
-        # Generate History Links
-        storage = get_storage_path("reports")
-        history_links = dashboard_generator.generate_history_html(storage)
-        
-        # Generate Content
-        html_content = dashboard_generator.get_html_template(data, history_links, logo_path)
-        
-        # Save
+        # Save HTML
         reports_dir = get_storage_path("reports")
         if not os.path.exists(reports_dir): os.makedirs(reports_dir)
         
@@ -89,19 +87,11 @@ def generate_dashboard_html(score, report_md, json_path, client_id="LOCAL_PIONEE
     except Exception as e:
         print(f"Error generando dashboard: {e}")
         return None
-    """
-    
-
-    
-    reports_dir = get_storage_path("reports")
-    path = os.path.join(reports_dir, "dashboard.html")
-    if not os.path.exists(reports_dir): os.makedirs(reports_dir)
-    
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(html_content)
-    return os.path.abspath(path)
 
 def run_security_flow():
+    # INICIO
+    status_manager.update_status("SCANNING", "Iniciando análisis...")
+    
     # 0. Argument Parser
     parser = argparse.ArgumentParser()
     parser.add_argument("--auto", action="store_true", help="Modo automático (sin pop-ups a menos que sea crítico)")
@@ -229,7 +219,17 @@ def run_security_flow():
         report_text = response.text
     except Exception as e:
         print(f"⚠️ Error generando análisis AI: {e}", file=sys.stderr)
-        report_text += f"\n\nError técnico: {e}"
+        error_msg = str(e)
+        if "400" in error_msg or "INVALID_ARGUMENT" in error_msg or "Sin API Key" in error_msg:
+            report_text = """
+            <div style="color: #fb6340; border-left: 3px solid #fb6340; padding-left: 10px;">
+                <h3>⚠️ Modo Offline</h3>
+                <p>No se pudo conectar con la IA de Google. Esto suele deberse a una <b>API Key faltante o inválida</b>.</p>
+                <p>El sistema sigue funcionando en modo de detección local.</p>
+            </div>
+            """
+        else:
+            report_text += f"\n\n<p>Error de conexión con IA: {error_msg}</p>"
 
     try:
         # 6. Save Data & Dashboard
@@ -243,8 +243,40 @@ def run_security_flow():
         }
         
         json_path = save_json_data(final_payload)
+        
+        # FILTRO DE ERRORES VISUALES
+        # Convertimos a string por seguridad
+        report_str = str(report_text)
+        if "Error" in report_str or "400" in report_str or "Exception" in report_str:
+            report_text = """
+            <div class="error-box">
+                <h3>⚠️ Análisis de IA No Disponible</h3>
+                <p><b>Modo Local Activo.</b> No se pudo conectar con el cerebro de Galt.ai en la nube.</p>
+                <p style="font-size: 13px; margin-top:10px; opacity:0.8;">
+                    Posibles causas:<br>
+                    1. Falta la API Key en la configuración.<br>
+                    2. Sin conexión a internet.<br>
+                    3. La API Key es inválida o expiró.
+                </p>
+                <p style="font-size: 12px; margin-top:10px;">
+                    <i>El sistema sigue protegiendo tu PC basándose en reglas estáticas.</i>
+                </p>
+            </div>
+            """
+        
+        # GENERATE DASHBOARD
+        # 1. Save Timestamped (History)
+        dashboard_path = generate_dashboard_html(security_score, report_text, json_path)
+        
+        # 2. Save/Overwrite "Latest" (For Tray/Auto-Reload)
+        if dashboard_path:
+            reports_dir = os.path.dirname(dashboard_path)
+            latest_path = os.path.join(reports_dir, "dashboard.html")
+            import shutil
+            shutil.copy2(dashboard_path, latest_path)
+            print(f"   ✅ Dashboard principal actualizado: {latest_path}")
+        
         # --- 6. NOTIFICACIÓN FINAL ---
-        # En lugar de abrir el navegador invasivamente, enviamos una notificación nativa
         try:
             from plyer import notification 
             base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
@@ -260,27 +292,35 @@ def run_security_flow():
         except Exception as e:
             print(f"Error enviando notificación: {e}")
 
-        # No abrimos el navegador automáticamente. El usuario lo hará desde el Tray.
-        print(f"\n✅ REPORTE GENERADO: {json_path}")
+        if dashboard_path:
+             print(f"\n✅ REPORTE GENERADO: {dashboard_path}")
+        else:
+             print("\n❌ Error generando reporte HTML.")
+             
         print("   Usa el icono del System Tray para verlo.")
         
-        # 7. Update Vault
+        # 7. Update Vault & Check Drift
         with open(state_file, "w") as f:
             json.dump({"timestamp": int(time.time()), "score": security_score, "findings": all_data}, f)
 
-            print("\n🚨 DRIFT DETECTADO: Abriendo dashboard automáticamente.")
+        # Drift Logic
+        drift_detected = (security_score != previous_score) if previous_score is not None else True
+        
+        if drift_detected:
+            print("\n🚨 DRIFT DETECTADO: Score ha cambiado.")
         else:
-            print("\n🤫 Modo Silencioso: Sin cambios críticos. Dashboard actualizado en background.")
+            print("\n🤫 Postura estable.")
 
-        if should_open:
-            print(f"   Abriendo reporte: {dashboard_path}")
-            try:
-                # Forzar ruta absoluta para el navegador
-                webbrowser.open(f"file://{os.path.abspath(dashboard_path)}")
-            except Exception as e:
-                print(f"Error abriendo navegador: {e}")
-
+        # Optional: Auto-open if critical?
+        # For now, we rely on notifications. 
+        # should_open = drift_detected and security_score < 50
+        
+        # FIN EXITOSO
+        status_manager.update_status("IDLE", "Análisis completado", score=security_score)
+        
     except Exception as e:
+        # FIN CON ERROR
+        status_manager.update_status("IDLE", "Error en análisis")
         print(f"❌ Error en flujo Reporte/Guardado: {e}")
 
 if __name__ == "__main__":

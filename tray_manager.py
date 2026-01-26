@@ -4,6 +4,8 @@ from PIL import Image, ImageDraw
 import webbrowser
 import os
 import sys
+import runner
+from plyer import notification
 import threading
 import logging
 
@@ -23,37 +25,90 @@ def load_icon():
         # Fallback: Generar cuadrado rojo si fallan los assets
         return Image.new('RGB', (64, 64), color = 'red')
 
-def on_scan(icon, item):
-    """Trigger a manual scan (conceptually)."""
-    # In a real event system, we would signal the sentinel thread.
-    # For now, we just log it or maybe run a one-off runner.
-    logging.info("User requested Manual Scan from Tray.")
-    # This implies we might want to trigger `runner.run_security_flow()` 
-    # but strictly speaking, the sentinel is running on a loop.
-    # We could force a run if we had a shared event object.
-    pass
+from config import get_storage_path
 
-def on_view_report(icon, item):
-    """Open the latest report or dashboard in browser."""
-    # Assuming reports are in "reports" folder or a dashboard URL
-    # For MVP, let's open the website or a local file
-    webbrowser.open("https://galt.ai/dashboard") 
+def run_manual_scan(icon, item):
+    """Ejecuta el escaneo en un hilo separado con notificaciones."""
+    # 1. Feedback Inmediato
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    icon_path = os.path.join(base_path, "app.ico")
+    
+    try:
+        notification.notify(
+            title='Galt.ai',
+            message='🔄 Iniciando escaneo de seguridad...',
+            app_name='Galt.ai',
+            app_icon=icon_path if os.path.exists(icon_path) else None,
+            timeout=3
+        )
+    except Exception as e:
+        logging.error(f"Error notificando inicio: {e}")
+    
+    # 2. Función wrapper para el thread
+    def _scan_thread():
+        try:
+            # Esto ejecutará el escaneo, generará el HTML y lanzará la notificación de FIN
+            runner.run_security_flow() 
+        except Exception as e:
+            logging.error(f"Error en escaneo manual: {e}")
 
-def on_exit(icon, item):
-    """Clean exit."""
-    logging.info("Exiting via Tray...")
-    icon.stop()
-    os._exit(0) # Force kill all threads
+    # 3. Lanzar Thread
+    threading.Thread(target=_scan_thread, daemon=True).start()
+
+def open_dashboard(icon=None, item=None):
+    """
+    Abre el dashboard.html local usando el protocolo file:// absoluto.
+    Evita abrir dominios de internet por error.
+    """
+    try:
+        # 1. Construir ruta absoluta al archivo
+        report_dir = get_storage_path("reports")
+        dashboard_path = os.path.join(report_dir, "dashboard.html")
+        
+        # Check if dashboard.html exists, otherwise fallback to latest scan
+        if os.path.exists(dashboard_path):
+            latest_report = dashboard_path
+        else:
+            files = [f for f in os.listdir(report_dir) if f.endswith('.html')]
+            if not files:
+                logging.warning("No dashboard reports found.")
+                return
+            files.sort(key=lambda x: os.path.getmtime(os.path.join(report_dir, x)), reverse=True)
+            latest_report = os.path.join(report_dir, files[0])
+            
+        logging.info(f"Abriendo Dashboard: {latest_report}")
+        
+        # 3. Convertir a URL de archivo (URI)
+        from pathlib import Path
+        file_url = Path(latest_report).as_uri()
+        
+        webbrowser.open(file_url)
+        
+    except Exception as e:
+        logging.error(f"Error abriendo dashboard: {e}")
+
+def on_action(icon, item):
+    """Manejador genérico para el menú."""
+    if str(item) == "Abrir Panel Web":
+        open_dashboard()
+    elif str(item) == "Escanear Ahora":
+        run_manual_scan(icon, item)
+    elif str(item) == "Salir":
+        icon.stop()
+        os._exit(0)
 
 def run_tray():
     """Starts the system tray icon. BLOCKING."""
-    menu = (
-        item('Escanear Ahora', on_scan),
-        item('Ver Reporte', on_view_report),
-        item('Salir', on_exit)
+    image = load_icon()
+    
+    # DEFINICIÓN DEL MENÚ
+    menu = pystray.Menu(
+        # default=True habilita la acción por DOBLE CLICK (Bold en el menú)
+        pystray.MenuItem("Abrir Panel Web", on_action, default=True),
+        pystray.MenuItem("Escanear Ahora", on_action),
+        pystray.MenuItem("Salir", on_action)
     )
-    
-    icon = pystray.Icon("GaltAI", load_icon(), "Galt.ai Sentinel", menu)
-    
+
+    icon = pystray.Icon("GaltAI", image, "Galt.ai Security", menu)
     logging.info("Tray Icon started.")
     icon.run()

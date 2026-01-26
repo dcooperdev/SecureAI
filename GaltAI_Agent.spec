@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('sensor_*.py', '.'), ('runner.py', '.'), ('sentinel.py', '.'), ('config.py', '.'), ('.env.example', '.')],
+    datas=[('sensor_*.py', '.'), ('runner.py', '.'), ('sentinel.py', '.'), ('config.py', '.'), ('.env.example', '.'), ('app.ico', '.'), ('logo.png', '.')],
     hiddenimports=['dotenv', 'google', 'google.genai', 'google.api_core', 'google.auth', 'google.ai', 'grpc', 'google', 'google.generativeai', 'google.generativeai.types', 'google.generativeai.notebook', 'requests', 'idna', 'urllib3', 'certifi'],
     hookspath=['hooks'],
     hooksconfig={},
@@ -35,4 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=['app.ico'],
 )
