@@ -8,4 +8,4 @@ google-api-core
 google-auth
 pystray
 Pillow
-pywin32
+pywin32; sys_platform == 'win32'
