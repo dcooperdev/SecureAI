@@ -50,7 +50,7 @@ def check_remote_config(client_id):
         # Fallback seguro
         return 86400, "UNKNOWN", "⚪ MODO SEGURO (Default)"
 
-def main():
+def main_loop():
     print(f"👁️  GALT.AI SENTINEL: VIGILANCIA ACTIVA")
     print(f"    Cliente ID: {CLIENT_ID}")
     print("--------------------------------------")
@@ -136,4 +136,4 @@ def main():
         print("\n👋 Sentinel detenido.")
 
 if __name__ == "__main__":
-    main()
+    main_loop()

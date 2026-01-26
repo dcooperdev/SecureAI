@@ -15,65 +15,75 @@ import sensor_network_discovery
 from config import get_api_key
 import onboarding
 
-setup_logging()
+import ctypes
+import threading
+import tray_manager
+
+def hide_console():
+    """Oculta la ventana de consola en Windows usando la API de Win32."""
+    if os.name == 'nt':
+        try:
+            hwnd = ctypes.windll.kernel32.GetConsoleWindow()
+            if hwnd != 0:
+                ctypes.windll.user32.ShowWindow(hwnd, 0) # 0 = SW_HIDE
+                logging.info("Consola ocultada. Entrando en modo sigiloso.")
+        except Exception as e:
+            logging.error(f"No se pudo ocultar consola: {e}")
 
 def dispatch():
     # Vital fix for Windows infinite loop with PyInstaller
     multiprocessing.freeze_support()
+    setup_logging()
 
-    # --- LOGICA DE ONBOARDING ---
-    # Solo ejecutar si NO hay argumentos (doble click) o es modo sentinel explícito.
-    is_interactive = len(sys.argv) == 1 or (len(sys.argv) > 1 and sys.argv[1] == "sentinel")
-    
-    if is_interactive:
-        current_key = get_api_key()
-        # Validar la llave existente
-        is_valid = False
-        if current_key:
-            logging.info("Verificando validez de API Key...")
-            is_valid = onboarding.validate_key(current_key)
-            if not is_valid:
-                logging.warning("API Key detectada pero inválida.")
+    # Si es un subproceso específico (ej: runner ejecutado por el scheduler), no hacemos nada de GUI
+    if len(sys.argv) > 1 and sys.argv[1] != "sentinel":
+        mode = sys.argv[1]
+        
+        # CLEANUP ARGUMENTS for underlying modules
+        sys.argv.pop(0)
 
-        if not current_key or not is_valid:
-            logging.warning("Iniciando asistente de configuración...")
-            success = onboarding.prompt_for_key()
-            if not success:
-                logging.error("Configuración cancelada o fallida. Saliendo.")
-                sys.exit(1)
+        if mode == "runner":
+            runner.run_security_flow()
+        elif mode == "sensor_procesos": sensor_procesos.main()
+        elif mode == "sensor_red": sensor_red.main()
+        elif mode == "sensor_sistema": sensor_sistema.main()
+        elif mode == "sensor_vulnerabilidades": sensor_vulnerabilidades.main()
+        elif mode == "sensor_network_discovery": sensor_network_discovery.main()
         else:
-            logging.info(f"API Key válida detectada ({current_key[:4]}...{current_key[-4:]}). Iniciando servicio.")
-    # -----------------------------
-
-    if len(sys.argv) == 1:
-        # Default behavior: Sentinel Mode
-        sentinel.main()
+            logging.error(f"Modo desconocido: {mode}")
         return
 
-    mode = sys.argv[1]
-
-    # CLEANUP ARGUMENTS for underlying modules
-    # sys.argv is currently ['main.py', 'sensor_procesos', '--local-only']
-    # We remove 'main.py' so sys.argv becomes ['sensor_procesos', '--local-only']
-    # Argparse inside sensors will treat 'sensor_procesos' as the script name (argv[0]) and parse the rest.
-    sys.argv.pop(0)
-
-    if mode == "sentinel":
-        sentinel.main()
-    elif mode == "runner":
-        runner.run_security_flow()
+    # --- MODO PRINCIPAL (Sentinel) ---
     
-    # --- SENSOR DISPATCH ---
-    elif mode == "sensor_procesos": sensor_procesos.main()
-    elif mode == "sensor_red": sensor_red.main()
-    elif mode == "sensor_sistema": sensor_sistema.main()
-    elif mode == "sensor_vulnerabilidades": sensor_vulnerabilidades.main()
-    elif mode == "sensor_network_discovery": sensor_network_discovery.main()
+    # 1. VALIDACIÓN / ONBOARDING (Consola Visible)
+    if not get_api_key():
+        print("\n⚠️  GALT.AI: Configuración Inicial Requerida")
+        # El usuario interactúa aquí con la ventana negra
+        if not onboarding.prompt_for_key_console():
+            print("❌ Cancelado por el usuario.")
+            sys.exit(1)
+            
+    # Validar que la llave sea funcional (sanity check)
+    current_key = get_api_key()
+    if current_key and not onboarding.validate_key(current_key):
+         print("⚠️  La llave guardada parece inválida. Re-iniciando onboarding...")
+         if not onboarding.prompt_for_key_console():
+            sys.exit(1)
+
+    # 2. TRANSICIÓN A TRAY (Ocultar Consola)
+    print("✅ Sistema configurado. Iniciando modo vigilancia...")
+    hide_console() 
+
+    # 3. INICIAR MOTORES
+    logging.info("Arrancando Sentinel en background...")
     
-    else:
-        # Fallback
-        logging.warning(f"Modo desconocido '{mode}'. Iniciando Sentinel.")
-        sentinel.main()
+    # Hilo del Sentinel (Lógica de seguridad en background)
+    sentinel_thread = threading.Thread(target=sentinel.main_loop, daemon=True)
+    sentinel_thread.start()
+
+    # Hilo Principal (UI del Tray - Bloqueante)
+    # Pystray necesita correr en el hilo principal
+    tray_manager.run_tray()
 
 if __name__ == "__main__":
     dispatch()

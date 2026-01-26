@@ -84,5 +84,9 @@ def prompt_for_key(force_cli=False):
                 root.destroy()
                 return False
 
+def prompt_for_key_console():
+    """Wrapper para forzar modo consola explícitamente."""
+    return prompt_for_key(force_cli=True)
+
 if __name__ == "__main__":
     prompt_for_key()

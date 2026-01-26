@@ -6,3 +6,6 @@ pyinstaller
 google-generativeai
 google-api-core
 google-auth
+pystray
+Pillow
+pywin32
