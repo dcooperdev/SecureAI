@@ -6,7 +6,9 @@ __pycache__
 
 # Logs
 logs
-reports
+# reports (Allowed source code)
+reports/*.html
+reports/data/
 
 # PyInstaller
 build/
