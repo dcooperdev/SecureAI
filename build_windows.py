@@ -45,6 +45,8 @@ args = [
     f'--add-data=sentinel.py{sep}.',
     f'--add-data=config.py{sep}.',
     f'--add-data=.env.example{sep}.',
+    f'--add-data=app.ico{sep}.',
+    f'--add-data=logo.png{sep}.',
     '--console',
 ]
 
