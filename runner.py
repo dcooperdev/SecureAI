@@ -89,46 +89,6 @@ def generate_dashboard_html(score, report_md, json_path, client_id="LOCAL_PIONEE
     except Exception as e:
         print(f"Error generando dashboard: {e}")
         return None
-                <div class="col-md-12">
-                    <div class="score-circle mb-3">
-                        <div class="score-inner">
-                            <span class="score-number">{score}</span>
-                            <span class="score-label">SCORE</span>
-                        </div>
-                    </div>
-                    <h2 class="fw-light">Postura de Seguridad</h2>
-                    <p class="text-muted">ID Cliente: {client_id}</p>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-lg-8 mx-auto">
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-header bg-transparent border-bottom border-secondary py-3">
-                            <h5 class="mb-0">📋 Análisis de Inteligencia Artificial</h5>
-                        </div>
-                        <div class="card-body">
-                            <div id="report-content" class="markdown-body">
-                                </div>
-                        </div>
-                    </div>
-
-                    <div class="text-center mb-5">
-                         <a href="../{json_path}" target="_blank" class="btn btn-outline-secondary btn-sm">
-                            📄 Ver Datos Crudos (JSON)
-                         </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-        <script>
-            const markdownText = `{sanitized_report}`; 
-            document.getElementById('report-content').innerHTML = marked.parse(markdownText);
-        </script>
-    </body>
-    </html>
     """
     
 
