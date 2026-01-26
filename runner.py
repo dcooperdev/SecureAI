@@ -44,60 +44,51 @@ def save_json_data(data):
         json.dump(data, f, indent=2, ensure_ascii=False)
     return filename
 
+import dashboard_generator
+from plyer import notification
+
+# ...
+
 def generate_dashboard_html(score, report_md, json_path, client_id="LOCAL_PIONEER"):
-    """Genera un Dashboard HTML moderno y lo guarda localmente."""
-    
-    # Determinar color según score
-    score_color = "#dc3545" # Rojo
-    if score >= 80: score_color = "#198754" # Verde
-    elif score >= 50: score_color = "#ffc107" # Amarillo
-
-    # Sanitize report for JS embedding (Fix SyntaxError with backslashes in f-string)
-    sanitized_report = report_md.replace('`', r'\`').replace('$', r'\$')
-
-    html_content = f"""
-    <!DOCTYPE html>
-    <html lang="es" data-bs-theme="dark">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Galt.ai Dashboard</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <style>
-            body {{ background-color: #121212; color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }}
-            .score-circle {{
-                width: 150px; height: 150px; border-radius: 50%;
-                background: conic-gradient({score_color} {score}%, #2c2c2c 0);
-                display: flex; align-items: center; justify-content: center;
-                margin: 0 auto; box-shadow: 0 0 20px {score_color}40;
-            }}
-            .score-inner {{
-                width: 130px; height: 130px; border-radius: 50%;
-                background-color: #121212; display: flex; flex-direction: column;
-                align-items: center; justify-content: center;
-            }}
-            .score-number {{ font-size: 3rem; font-weight: bold; color: {score_color}; line-height: 1; }}
-            .score-label {{ font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }}
-            .card {{ background-color: #1e1e1e; border: 1px solid #333; }}
-            pre {{ background: #111; padding: 15px; border-radius: 5px; border: 1px solid #333; }}
-            code {{ color: #d63384; }}
-            .markdown-body h1, .markdown-body h2 {{ border-bottom: 1px solid #333; padding-bottom: 0.3em; margin-top: 1.5em; color: #fff; }}
-            .markdown-body h3 {{ color: #adb5bd; margin-top: 1.2em; }}
-            .markdown-body ul {{ padding-left: 20px; }}
-            .markdown-body strong {{ color: #fff; }}
-            .alert-critical {{ border-left: 5px solid #dc3545; background-color: #2c0b0e; padding: 15px; }}
-        </style>
-    </head>
-    <body>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary mb-4">
-            <div class="container">
-                <a class="navbar-brand fw-bold" href="#">🛡️ Galt.ai <span class="badge bg-primary ms-2" style="font-size:0.6em">BETA</span></a>
-                <span class="navbar-text text-light small">{datetime.now().strftime('%Y-%m-%d %H:%M')}</span>
-            </div>
-        </nav>
-
-        <div class="container">
-            <div class="row mb-5 text-center">
+    """Genera un Dashboard HTML moderno usando el generador externo y lo guarda."""
+    try:
+        # Determine assets path
+        # Build mode: sys._MEIPASS | Script mode: current dir
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+        logo_path = os.path.join(base_path, "logo.png")
+        
+        # Prepare Data
+        data = {
+            "score": score,
+            "client_id": client_id,
+            "ai_analysis": report_md # This needs markdown to html conversion if we want rich text, 
+                                     # but for now we inject raw or pre-render in runner if needed.
+                                     # Actually, let's keep it simple.
+        }
+        
+        # We need to convert markdown report_md to HTML for better display? 
+        # For this step, we just wrap it in a pre or div.
+        # But wait, dashboard_generator injects it directly.
+        
+        # Generate History Links
+        storage = get_storage_path("reports")
+        history_links = dashboard_generator.generate_history_html(storage)
+        
+        # Generate Content
+        html_content = dashboard_generator.get_html_template(data, history_links, logo_path)
+        
+        # Save
+        reports_dir = get_storage_path("reports")
+        if not os.path.exists(reports_dir): os.makedirs(reports_dir)
+        
+        filename = os.path.join(reports_dir, f"scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html")
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(html_content)
+            
+        return filename
+    except Exception as e:
+        print(f"Error generando dashboard: {e}")
+        return None
                 <div class="col-md-12">
                     <div class="score-circle mb-3">
                         <div class="score-inner">
@@ -292,22 +283,31 @@ def run_security_flow():
         }
         
         json_path = save_json_data(final_payload)
-        dashboard_path = generate_dashboard_html(security_score, report_text, json_path)
-        
-        print(f"\n✅ REPORTE JSON: {json_path}")
-        print(f"✅ DASHBOARD HTML: {dashboard_path}")
+        # --- 6. NOTIFICACIÓN FINAL ---
+        # En lugar de abrir el navegador invasivamente, enviamos una notificación nativa
+        try:
+            from plyer import notification 
+            base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+            icon_path = os.path.join(base_path, "app.ico")
+            
+            notification.notify(
+                title='Galt.ai Finalizado',
+                message=f'Análisis de Seguridad completo.\nScore: {security_score}/100',
+                app_icon=icon_path if os.path.exists(icon_path) else None,
+                timeout=10
+            )
+            print("🔔 Notificación enviada.")
+        except Exception as e:
+            print(f"Error enviando notificación: {e}")
+
+        # No abrimos el navegador automáticamente. El usuario lo hará desde el Tray.
+        print(f"\n✅ REPORTE GENERADO: {json_path}")
+        print("   Usa el icono del System Tray para verlo.")
         
         # 7. Update Vault
         with open(state_file, "w") as f:
             json.dump({"timestamp": int(time.time()), "score": security_score, "findings": all_data}, f)
 
-        # 8. UX Logic (Silent Sentinel vs Pop-up)
-        should_open = False
-        
-        if not args.auto:
-            should_open = True # Manual run -> Open always
-        elif drift_detected:
-            should_open = True # Drift detected -> Open alert
             print("\n🚨 DRIFT DETECTADO: Abriendo dashboard automáticamente.")
         else:
             print("\n🤫 Modo Silencioso: Sin cambios críticos. Dashboard actualizado en background.")

@@ -7,20 +7,21 @@ import sys
 import threading
 import logging
 
-def create_image():
-    """Generates a dynamic Cyber Shield icon."""
-    # Create a 64x64 image with transparent background
-    width = 64
-    height = 64
-    image = Image.new('RGBA', (width, height), (0, 0, 0, 0))
-    dc = ImageDraw.Draw(image)
+def load_icon():
+    """Carga app.ico (Windows) o logo.png (Otros) desde la ruta correcta."""
+    # Soporte para PyInstaller (ruta temporal _MEI)
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     
-    # Draw a shield shape (simplified as a rounded triangle/rectangle)
-    # Colors: Galt.ai theme (Blue/Cyan)
-    dc.rectangle((16, 16, 48, 48), fill=(0, 150, 255))
-    dc.ellipse((20, 20, 44, 44), fill=(255, 255, 255))
+    icon_path_win = os.path.join(base_path, "app.ico")
+    icon_path_png = os.path.join(base_path, "logo.png")
     
-    return image
+    if os.path.exists(icon_path_win):
+        return Image.open(icon_path_win)
+    elif os.path.exists(icon_path_png):
+        return Image.open(icon_path_png)
+    else:
+        # Fallback: Generar cuadrado rojo si fallan los assets
+        return Image.new('RGB', (64, 64), color = 'red')
 
 def on_scan(icon, item):
     """Trigger a manual scan (conceptually)."""
@@ -52,7 +53,7 @@ def run_tray():
         item('Salir', on_exit)
     )
     
-    icon = pystray.Icon("GaltAI", create_image(), "Galt.ai Sentinel", menu)
+    icon = pystray.Icon("GaltAI", load_icon(), "Galt.ai Sentinel", menu)
     
     logging.info("Tray Icon started.")
     icon.run()
