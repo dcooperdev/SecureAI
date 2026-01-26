@@ -1,7 +1,8 @@
 import pytest
 import os
 import json
-from reports.dashboard_generator import get_html_template
+from dashboard_generator import get_html_template
+from unittest.mock import patch
 
 @pytest.fixture
 def mock_clean_data():
@@ -27,7 +28,8 @@ def mock_threat_data():
 def test_score_color_critical(mock_threat_data):
     """Test 1: Traffic Light Score - Critical (Red)"""
     mock_threat_data['score'] = 45 
-    html = get_html_template(mock_threat_data, [], "logo.png")
+    with patch("dashboard_generator.glob.glob", return_value=[]):
+        html = get_html_template(mock_threat_data, [], "logo.png")
     
     # Assert the data is correctly embedded in the JS payload
     # Check for compact JSON format or ensure values exist
@@ -40,14 +42,16 @@ def test_score_color_critical(mock_threat_data):
 def test_score_color_secure(mock_clean_data):
     """Test 1b: Traffic Light Score - Secure (Green)"""
     mock_clean_data['score'] = 95
-    html = get_html_template(mock_clean_data, [], "logo.png")
+    with patch("dashboard_generator.glob.glob", return_value=[]):
+        html = get_html_template(mock_clean_data, [], "logo.png")
     
     assert '"score": 95' in html or '"score":95' in html
 
 def test_fallback_mode_visuals(mock_threat_data):
     """Test 2: Fallback Rendering - Icons & Hidden Raw Data"""
     # Ensure data is present for JS to render
-    html = get_html_template(mock_threat_data, [], "logo.png")
+    with patch("dashboard_generator.glob.glob", return_value=[]):
+        html = get_html_template(mock_threat_data, [], "logo.png")
     
     assert '"details": "Unknown IP"' in html or '"details":"Unknown IP"' in html
     assert '"details": "Old OS"' in html or '"details":"Old OS"' in html
@@ -64,7 +68,8 @@ def test_fallback_mode_visuals(mock_threat_data):
 
 def test_empty_state(mock_clean_data):
     """Test 3: Empty State - System Secure"""
-    html = get_html_template(mock_clean_data, [], "logo.png")
+    with patch("dashboard_generator.glob.glob", return_value=[]):
+        html = get_html_template(mock_clean_data, [], "logo.png")
     
     # Assert JS Logic for empty state is present
     assert 'findings.length === 0' in html
