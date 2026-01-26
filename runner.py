@@ -2,7 +2,8 @@ import subprocess
 import json
 import os
 import sys
-import webbrowser
+# import webbrowser (Removed)
+# from plyer import notification (Removed)
 import argparse
 import time
 
@@ -291,18 +292,26 @@ def run_security_flow():
             print(f"   ✅ Dashboard principal actualizado: {latest_path}")
         
         # --- 6. NOTIFICACIÓN FINAL ---
+        # --- 6. NOTIFICACIÓN FINAL (NATIVA) ---
         try:
-            from plyer import notification 
-            base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
-            icon_path = os.path.join(base_path, "app.ico")
+            from core.notifier import Notifier
+            notifier = Notifier()
             
-            notification.notify(
+            # Determine icon path safely
+            base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+            # Notifier implementation handles icons internally or system default, 
+            # but we pass the message. The new Notifier.send_notification 
+            # takes (title, message).
+            
+            # Determine click URI (prefer latest static 'dashboard.html' if copy succeeded)
+            click_target = latest_path if 'latest_path' in locals() and latest_path else (dashboard_path if dashboard_path else None)
+
+            notifier.send_notification(
                 title='Galt.ai Finalizado',
-                message=f'Análisis de Seguridad completo.\nScore: {security_score}/100',
-                app_icon=icon_path if os.path.exists(icon_path) else None,
-                timeout=10
+                message=f'Análisis de Seguridad completo.\nScore: {security_score}/100\nClick para ver detalles.',
+                click_action=click_target
             )
-            print("🔔 Notificación enviada.")
+            print(f"🔔 Notificación Interactiva enviada (Target: {click_target})")
         except Exception as e:
             print(f"Error enviando notificación: {e}")
 
