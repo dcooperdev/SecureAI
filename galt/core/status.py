@@ -1,7 +1,7 @@
 import json
 import os
 import time
-from config import get_storage_path
+from galt.core.config import get_storage_path
 
 def get_status_file_path():
     return os.path.join(get_storage_path("reports"), "live_status.js")

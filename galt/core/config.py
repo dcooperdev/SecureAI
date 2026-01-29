@@ -3,6 +3,9 @@ import sys
 import platform
 import logging
 
+# Constante de Modelo AI (Quota: 14.4K RPD)
+LLM_MODEL = "gemma-3-27b-it"
+
 def setup_logging():
     """Configura logging silencioso hacia STDERR."""
     logging.basicConfig(
@@ -17,7 +20,7 @@ def setup_logging():
 def get_storage_path(subdir=""):
     """
     Retorna una ruta absoluta y escribible para datos.
-    Windows: C:\ProgramData\GaltAI\{subdir}
+    Windows: C:\\ProgramData\\GaltAI\\{subdir}
     Mac/Linux: /Users/{user}/.galt/{subdir}
     """
     system = platform.system()
@@ -38,11 +41,9 @@ def get_storage_path(subdir=""):
             print(f"Error creando directorio {target_dir}: {e}", file=sys.stderr)
     
     return target_dir
-    return target_dir
 
 from dotenv import load_dotenv
 
-# Cargar variables desde el ProgramData/Home
 # Cargar variables desde el ProgramData/Home
 storage_path = get_storage_path()
 env_path = os.path.join(storage_path, ".env")

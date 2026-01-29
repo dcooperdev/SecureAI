@@ -6,17 +6,17 @@ from unittest.mock import MagicMock, patch
 # Add root path to sys.path to import modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import dashboard_generator
+from galt.ui import dashboard as dashboard_generator
 
 @pytest.fixture
 def mock_get_storage_path():
-    with patch("dashboard_generator.get_storage_path") as mock:
+    with patch("galt.ui.dashboard.get_storage_path") as mock:
         mock.return_value = "mock/path"
         yield mock
 
 @pytest.fixture
 def mock_glob():
-    with patch("dashboard_generator.glob.glob") as mock:
+    with patch("galt.ui.dashboard.glob.glob") as mock:
         mock.return_value = []
         yield mock
 

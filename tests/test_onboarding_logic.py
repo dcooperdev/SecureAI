@@ -6,7 +6,7 @@ sys.path.append(os.getcwd())
 # Mock logging to avoid clutter
 logging.basicConfig(level=logging.CRITICAL)
 
-from onboarding import validate_key
+from galt.engine.onboarding import validate_key
 
 def test_validation():
     print("Testing validate_key...")

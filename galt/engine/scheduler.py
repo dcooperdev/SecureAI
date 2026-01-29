@@ -5,7 +5,7 @@ import json
 import sys
 from datetime import datetime
 from dotenv import load_dotenv
-from config import get_storage_path
+from galt.core.config import get_storage_path
 
 # Force UTF-8 on Windows
 if sys.stdout.encoding.lower() != 'utf-8':
@@ -95,8 +95,11 @@ def main_loop():
             score_before = get_current_score()
             
             # 2. Ejecución del Agente
-            # Llamamos al mismo ejecutable en modo "runner"
-            cmd = [sys.executable, "runner"]
+            # Llamamos al mismo ejecutable en modo "runner" o al modulo
+            if getattr(sys, 'frozen', False):
+                cmd = [sys.executable, "runner"]
+            else:
+                 cmd = [sys.executable, "-m", "galt.engine.orchestrator"]
             
             # Pasar flag --auto si corresponde
             if "--auto" in sys.argv or interval > 60: 

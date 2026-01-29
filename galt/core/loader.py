@@ -3,7 +3,7 @@ import os
 import sys
 import pathlib
 from typing import Optional, Any, Dict
-from core.constants import CURRENT_CONTRACT_VERSION
+from galt.core.constants import CURRENT_CONTRACT_VERSION
 
 def validate_plugin(plugin_module: Any) -> Optional[str]:
     """

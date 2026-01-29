@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import simpledialog, messagebox
-from config import save_api_key
+from galt.core.config import save_api_key
 import sys
 import logging
 

@@ -3,7 +3,7 @@ import pytest
 import sys
 import pathlib
 from unittest.mock import patch, MagicMock
-from core.notifier import Notifier
+from galt.core.notifier import Notifier
 
 @pytest.fixture
 def notifier():

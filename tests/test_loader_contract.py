@@ -1,6 +1,6 @@
 import pytest
-from core import loader
-from core.constants import CURRENT_CONTRACT_VERSION
+from galt.core import loader
+from galt.core.constants import CURRENT_CONTRACT_VERSION
 
 # Mock Objects
 class ValidPlugin:

@@ -26,7 +26,10 @@ class TestGaltSuite(unittest.TestCase):
         3. Contain 'event_id', 'timestamp', 'plugin', 'result'.
         """
         # Discovery based on pattern
-        sensor_files = glob.glob("sensor_*.py")
+        # Discovery based on pattern in galt/sensors
+        # Check files in galt/sensors/ but ignore __init__.py
+        sensor_files = glob.glob("galt/sensors/*.py")
+        sensor_files = [f for f in sensor_files if "__init__" not in f]
         if not sensor_files:
             self.fail("No sensor_*.py files found to test.")
             
@@ -36,10 +39,15 @@ class TestGaltSuite(unittest.TestCase):
             with self.subTest(sensor=sensor):
                 print(f"   👉 Testing {sensor}...")
                 
-                # Execution
+                # Execution as Module
+                # Convert path "galt\sensors\processes.py" to "galt.sensors.processes"
+                # Normalize path to handle mixed slashes on Windows
+                normalized_path = os.path.normpath(sensor)
+                module_name = normalized_path.replace(os.path.sep, ".").replace(".py", "")
+                
                 try:
                     result = subprocess.run(
-                        [sys.executable, sensor, "--local-only"],
+                        [sys.executable, "-m", module_name, "--local-only"],
                         capture_output=True,
                         text=True,
                         timeout=30
@@ -70,6 +78,8 @@ class TestGaltSuite(unittest.TestCase):
                         continue
                 
                 # Assertions
+                if extracted_data is None:
+                    print(f"❌ STDERR: {result.stderr}")
                 self.assertIsNotNone(extracted_data, f"❌ {sensor} did not produce parsable JSON")
                 self.assertIn("event_id", extracted_data, f"{sensor} missing event_id")
                 self.assertIn("plugin", extracted_data, f"{sensor} missing plugin")

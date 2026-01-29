@@ -1,5 +1,5 @@
 import pytest
-from reports.narrator import OfflineNarrator
+from galt.ui.narrator import OfflineNarrator
 
 class TestOfflineNarrator:
     

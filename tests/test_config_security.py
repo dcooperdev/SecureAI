@@ -6,7 +6,7 @@ from unittest.mock import patch
 # Add root path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from config import get_api_key
+from galt.core.config import get_api_key
 
 def test_get_api_key_from_env():
     """Test retrieving API key from environment variable."""

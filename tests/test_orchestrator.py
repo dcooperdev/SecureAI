@@ -2,7 +2,7 @@ import pytest
 import sys
 import re
 from unittest.mock import MagicMock, patch
-from core import uploader, loader
+from galt.core import uploader, loader
 
 # Mock Plugin Structure
 class MockPlugin:

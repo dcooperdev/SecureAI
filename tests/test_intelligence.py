@@ -1,11 +1,8 @@
 import pytest
 import json
-from unittest.mock import MagicMock
-# Assuming logic to be tested is in bridge.py or runner.py, 
-# but for the "Mock Everything" demo we will test the bridge logic specifically.
-# Since bridge.py is a script, we might need to import the client or refactor it.
-# For now, let's assume we are testing the Global Mock's ability to intercept genai.
-
+import os
+from unittest.mock import MagicMock, patch
+from galt.engine.bridge import Bridge
 from google import genai 
 
 def test_ai_mocking_active(mock_genai):
@@ -27,12 +24,61 @@ def test_ai_mocking_active(mock_genai):
     # The fixture yields the mock class, so we can check if it was instantiated
     assert mock_genai.called
 
-def test_bridge_logic_safe():
+def test_bridge_initialization(tmp_path):
     """
-    Import bridge and ensure it doesn't crash or make real calls on import/execution.
-    Note: bridge.py executes on import if not protected by if __name__ == "__main__".
-    We checked bridge.py and it has the protection.
+    Test that Bridge initializes correctly and creates the data directory.
     """
-    import bridge
-    # If bridge had side effects, the global mocks should catch them.
-    assert bridge.client is not None
+    # Use a temporary directory for the bridge data
+    test_vault = tmp_path / "vault"
+    
+    # Patch load_dotenv to avoid side effects
+    with patch('galt.engine.bridge.load_dotenv'):
+        bridge = Bridge(data_dir=str(test_vault))
+        
+        assert os.path.exists(test_vault)
+        assert bridge.data_dir == str(test_vault)
+        # client might be None if no API key in env, but attribute should exist
+        assert hasattr(bridge, 'client') 
+
+def test_bridge_smart_caching(tmp_path, mock_genai):
+    """
+    Test the Safe/Smart Caching logic in Bridge.get_analysis
+    """
+    test_vault = tmp_path / "vault"
+    
+    with patch('galt.engine.bridge.load_dotenv'):
+        # Mock env to ensure client is created (mocked by conftest/mock_genai)
+        with patch.dict(os.environ, {"GOOGLE_API_KEY": "TEST_KEY"}):
+             bridge = Bridge(data_dir=str(test_vault))
+             
+             # 1. First Run (No History) -> Should call AI
+             findings = [{"port": 80, "service": "http"}]
+             score = 80
+             
+             result = bridge.get_analysis(findings, score)
+             
+             assert result["ai_status"] == "online"
+             assert "Mocked AI Analysis" in result["markdown"]
+             assert result["used_cache"] is False
+
+             # 2. Second Run (Same Data) -> Should use Cache
+             # The first run should have saved the state
+             result_2 = bridge.get_analysis(findings, score)
+             
+             assert result_2["ai_status"] == "cached"
+             assert result_2["used_cache"] is True
+             assert result_2["markdown"] == result["markdown"]
+             
+             # 3. Third Run (Changed Data) -> Should call AI
+             findings_changed = [{"port": 80, "service": "http"}, {"port": 443}]
+             result_3 = bridge.get_analysis(findings_changed, score) # Score same, content changed
+             
+             assert result_3["ai_status"] == "online"
+             assert result_3["used_cache"] is False
+             
+             # 4. Fourth Run (Improved Score) -> Should call AI
+             score_improved = 90
+             result_4 = bridge.get_analysis(findings_changed, score_improved)
+             
+             assert result_4["ai_status"] == "online"
+             

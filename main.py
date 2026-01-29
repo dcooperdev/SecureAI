@@ -3,21 +3,21 @@ import multiprocessing
 import logging
 import json
 import os
-from config import setup_logging
+from galt.core.config import setup_logging
 # Import modules explicitly for PyInstaller analysis
-import sentinel
-import runner
-import sensor_procesos
-import sensor_red
-import sensor_sistema
-import sensor_vulnerabilidades
-import sensor_network_discovery
-from config import get_api_key
-import onboarding
+from galt.engine import scheduler as sentinel
+from galt.engine import orchestrator as runner
+from galt.sensors import processes as sensor_procesos
+from galt.sensors import network_basic as sensor_red
+from galt.sensors import system as sensor_sistema
+from galt.sensors import vuln as sensor_vulnerabilidades
+from galt.sensors import network_scan as sensor_network_discovery
+from galt.core.config import get_api_key
+from galt.engine import onboarding
 
 import ctypes
 import threading
-import tray_manager
+from galt.ui import tray as tray_manager
 
 import subprocess
 

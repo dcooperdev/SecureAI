@@ -1,5 +1,5 @@
 import pytest
-from core import sanitizer
+from galt.core import sanitizer
 
 def test_sanitize_windows_path():
     raw_text = r"Error at C:\Users\Alice\Documents\secret.txt"

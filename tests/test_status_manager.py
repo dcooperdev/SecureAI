@@ -7,7 +7,7 @@ from unittest.mock import patch, mock_open
 # Add root path to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import status_manager
+from galt.core import status as status_manager
 
 def test_update_status_scanning(tmp_path):
     """Verifica que escribe el archivo JS correcto para estado SCANNING."""
@@ -16,7 +16,7 @@ def test_update_status_scanning(tmp_path):
     fake_reports_dir = tmp_path / "reports"
     fake_reports_dir.mkdir()
     
-    with patch("status_manager.get_storage_path", return_value=str(fake_reports_dir)):
+    with patch("galt.core.status.get_storage_path", return_value=str(fake_reports_dir)):
         status_manager.update_status("SCANNING", "Test Message")
         
         status_file = fake_reports_dir / "live_status.js"
@@ -41,7 +41,7 @@ def test_update_status_idle(tmp_path):
     fake_reports_dir = tmp_path / "reports"
     fake_reports_dir.mkdir()
     
-    with patch("status_manager.get_storage_path", return_value=str(fake_reports_dir)):
+    with patch("galt.core.status.get_storage_path", return_value=str(fake_reports_dir)):
         status_manager.update_status("IDLE", "Done", 99)
         
         content = (fake_reports_dir / "live_status.js").read_text(encoding="utf-8")

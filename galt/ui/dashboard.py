@@ -2,7 +2,8 @@ import os
 import json
 import glob
 from datetime import datetime
-from config import get_storage_path
+from galt.core.config import get_storage_path
+import markdown
 
 def get_html_template(current_data, history_links, logo_path_abs, current_json_path=None):
     # 1. Recolectar Historial
@@ -12,31 +13,75 @@ def get_html_template(current_data, history_links, logo_path_abs, current_json_p
     json_files = glob.glob(os.path.join(reports_path, "scan_*.json"))
     json_files.sort(key=os.path.getmtime, reverse=True)
     
-    # 2. Force inclusion of the current file if provided (Real-time consistency)
-    if current_json_path:
-        current_json_path = os.path.abspath(current_json_path)
-        if current_json_path not in [os.path.abspath(f) for f in json_files]:
-            # Prepend it if glob missed it (filesystem race condition)
-            json_files.insert(0, current_json_path)
-    
-    history_data = []
-    
+    # Helper para conversión segura
+    def safe_md_to_html(text):
+        try:
+            if not text: return ""
+            return markdown.markdown(text, extensions=['extra', 'nl2br', 'sane_lists'])
+        except Exception as e:
+            print(f"DEBUG: Error converting markdown: {e}")
+            return text
+            
     # Ensure logo path is a file URI
     logo_path_abs = os.path.abspath(logo_path_abs)
     logo_uri = f"file:///{logo_path_abs.replace(os.path.sep, '/')}"
 
-    # Cargar top 15 reportes
+    history_data = []
+
+    # 1. Prioridad: Procesar current_data (En memoria, lo más fresco)
+    if current_data:
+        # Asegurar timestamps para la UI si faltan
+        if 'ui_date_full' not in current_data:
+            current_data['ui_date_full'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Mapping de orchestrator (ai_analysis -> ai_analysis_markdown)
+        if 'ai_analysis' in current_data and 'ai_analysis_markdown' not in current_data:
+             current_data['ai_analysis_markdown'] = current_data['ai_analysis']
+
+        # Conversión Markdown -> HTML
+        if 'ai_analysis_markdown' in current_data:
+             print("DEBUG: Convirtiendo narrativa actual a HTML...")
+             current_data['ai_analysis_html'] = safe_md_to_html(current_data['ai_analysis_markdown'])
+        
+        history_data.append(current_data)
+
+    # 2. Cargar Historial (excluyendo el actual si ya está)
+    current_path_abs = os.path.abspath(current_json_path) if current_json_path else None
+    
     for f in json_files[:15]:
+        # Evitar duplicados si ya procesamos current_data y coincide el path
+        if current_path_abs and os.path.abspath(f) == current_path_abs:
+            continue
+            
         try:
             with open(f, 'r', encoding='utf-8') as file:
                 data = json.load(file)
                 ts = os.path.getmtime(f)
                 data['ui_date_short'] = datetime.fromtimestamp(ts).strftime('%H:%M:%S')
                 data['ui_date_full'] = datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+                
+                # Renderizar Markdown a HTML para la UI
+                if 'ai_analysis_markdown' in data and data['ai_analysis_markdown']:
+                    data['ai_analysis_html'] = safe_md_to_html(data['ai_analysis_markdown'])
+                else:
+                    data['ai_analysis_html'] = ""
+                    
                 history_data.append(data)
-        except: continue
+        except Exception as e:
+            print(f"Error cargando historial {f}: {e}")
+            continue
 
     if not history_data:
+        # Si no hay historial, usar current_data
+        # Asegurar que current_data tenga el HTML renderizado también
+        if 'ai_analysis' in current_data and current_data['ai_analysis']:
+             # orchestrator pasa 'ai_analysis' (MD report), mapeamos a lo que espera la UI
+             current_data['ai_analysis_markdown'] = current_data['ai_analysis']
+             current_data['ai_analysis_html'] = markdown.markdown(
+                current_data['ai_analysis'],
+                extensions=['extra', 'smarty', 'nl2br']
+             )
+        
         current_data['ui_date_full'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         history_data = [current_data]
 
@@ -49,6 +94,7 @@ def get_html_template(current_data, history_links, logo_path_abs, current_json_p
         <meta charset="UTF-8">
         <title>Galt.ai Security Center</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <script src="https://unpkg.com/feather-icons"></script>
         <style>
             :root {{ --bg: #0f0f13; --sidebar: #18181f; --text: #e0e0e0; --accent: #2dce89; --danger: #f5365c; --warning: #fb6340; }}
             body {{ margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }}
@@ -146,6 +192,75 @@ def get_html_template(current_data, history_links, logo_path_abs, current_json_p
             
             .status-badge {{ background: rgba(255,255,255,0.05); padding: 6px 14px; border-radius: 20px; font-size: 13px; display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.1); }}
             .dot {{ width: 8px; height: 8px; background: #2dce89; border-radius: 50%; box-shadow: 0 0 10px rgba(45, 206, 137, 0.4); }}
+            
+            /* AI Badge Specifics */
+            .ai-badge-container {{ display: flex; gap: 10px; align-items: center; }}
+
+            /* AI Report Card Styling */
+            .ai-report-card {{
+                border: 1px solid #ea580c; /* Borde naranja sutil */
+                background-color: #1e293b; 
+                margin-top: 2rem;
+                overflow: hidden; /* Para que el header no se salga */
+                padding: 0 !important; /* Reset del padding generico de card */
+            }}
+            .ai-report-header {{
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                background-color: rgba(234, 88, 12, 0.1); 
+                padding: 15px 25px;
+                border-bottom: 1px solid #ea580c;
+            }}
+            .ai-icon {{
+                 color: #ea580c;
+                 width: 24px; height: 24px;
+            }}
+            .ai-report-header h3 {{
+                margin: 0;
+                color: #fb923c;
+                font-size: 16px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }}
+
+            /* Estilos del contenido Markdown renderizado */
+            .ai-report-content {{
+                padding: 25px;
+                line-height: 1.7; 
+                color: #e2e8f0; 
+                font-size: 15px;
+            }}
+            .ai-report-content h1, .ai-report-content h2, .ai-report-content h3 {{
+                color: #fb923c; 
+                margin-top: 1.5em;
+                margin-bottom: 0.8em;
+                font-weight: 600;
+            }}
+            .ai-report-content h1 {{ font-size: 1.8em; border-bottom: 1px solid #333; padding-bottom: 10px; }}
+            .ai-report-content h2 {{ font-size: 1.4em; }}
+            .ai-report-content h3 {{ font-size: 1.2em; }}
+            
+            .ai-report-content strong {{
+                color: #ffffff; 
+                font-weight: 700;
+            }}
+            .ai-report-content ul, .ai-report-content ol {{
+                padding-left: 1.5rem;
+                margin-bottom: 1.5em;
+            }}
+            .ai-report-content li {{
+                margin-bottom: 0.5em;
+            }}
+            .ai-report-content p {{
+                margin-bottom: 1.2em;
+            }}
+            .error-box {{
+                background: rgba(245, 54, 92, 0.1);
+                border-left: 4px solid #f5365c;
+                padding: 15px;
+                border-radius: 4px;
+            }}
         </style>
     </head>
     <body class="state-idle">
@@ -171,10 +286,19 @@ def get_html_template(current_data, history_links, logo_path_abs, current_json_p
                         <div id="report-timestamp" class="report-subtitle">Cargando...</div>
                     </div>
                     <div>
+                    <div class="ai-badge-container">
+                        <!-- AI Status Badge -->
+                        <div id="ai-status-badge" class="status-badge" style="border-color: rgba(255,255,255,0.1);">
+                            <div id="ai-status-dot" class="dot" style="background: #999;"></div>
+                            <span id="ai-status-text" style="color: #ccc;">IA Estado</span>
+                        </div>
+                        
+                        <!-- System Watchdog Status -->
                         <div id="status-badge" class="status-badge">
                             <div id="status-dot" class="dot"></div>
                             <span id="status-text">Sistema Activo</span>
                         </div>
+                    </div>
                     </div>
                 </div>
 
@@ -250,7 +374,30 @@ def get_html_template(current_data, history_links, logo_path_abs, current_json_p
                 else if(score >= 60) scoreLabel.innerText = "Precaución";
                 else scoreLabel.innerText = "Estado Crítico";
 
-                // 2. AI vs Fallback Logic
+                // 2. AI Status Label Logic
+                const aiStatus = data.ai_status || 'offline';
+                const aiBadge = document.getElementById('ai-status-badge');
+                const aiText = document.getElementById('ai-status-text');
+                const aiDot = document.getElementById('ai-status-dot');
+                
+                if (aiStatus === 'online') {{
+                    aiText.innerText = 'IA Activa (Gemma-3)';
+                    aiText.style.color = '#2dce89';
+                    aiDot.style.background = '#2dce89';
+                    aiBadge.style.borderColor = 'rgba(45, 206, 137, 0.3)';
+                }} else if (aiStatus === 'cached') {{
+                    aiText.innerText = 'IA Cached';
+                    aiText.style.color = '#fb6340';
+                    aiDot.style.background = '#fb6340';
+                    aiBadge.style.borderColor = 'rgba(251, 99, 64, 0.3)';
+                }} else {{
+                    aiText.innerText = 'IA Offline (Reglas Locales)';
+                    aiText.style.color = '#f5365c';
+                    aiDot.style.background = '#f5365c'; // Red
+                    aiBadge.style.borderColor = 'rgba(245, 54, 92, 0.3)';
+                }}
+
+                // 3. AI vs Fallback Content Logic
                 const aiBody = document.getElementById('ai-body');
                 const fallbackContainer = document.getElementById('fallback-container');
                 
@@ -265,8 +412,24 @@ def get_html_template(current_data, history_links, logo_path_abs, current_json_p
                     fallbackContainer.style.display = 'grid'; // Mostrar grid
                 }} 
                 else if (hasAI) {{
-                    // Happy Path: IA funcionó
-                    aiBody.innerHTML = data.ai_analysis_markdown;
+                    // Happy Path: IA funcionó (Rendered HTML)
+                    // Usamos la versión HTML pre-renderizada si existe, sino fallback al MD
+                    let htmlContent = data.ai_analysis_html || data.ai_analysis_markdown;
+                    
+                    aiBody.innerHTML = `
+                        <div class="card ai-report-card">
+                            <div class="card-header ai-report-header">
+                                <i data-feather="cpu" class="ai-icon"></i>
+                                <h3>Análisis del CISO Virtual (Gemma-3)</h3>
+                            </div>
+                            <div class="card-body ai-report-content">
+                                ${{htmlContent}}
+                            </div>
+                        </div>
+                    `;
+                    // Re-run feather replace for dynamic content
+                    setTimeout(() => feather.replace(), 100);
+                    
                     fallbackContainer.style.display = 'none';
                 }} 
                 else {{
@@ -276,7 +439,7 @@ def get_html_template(current_data, history_links, logo_path_abs, current_json_p
                     fallbackContainer.style.display = 'grid';
                 }}
 
-                // 3. Raw Data (Always hidden)
+                // 4. Raw Data (Always hidden)
                 document.getElementById('raw-data').innerText = JSON.stringify(data, null, 2);
             }}
             
@@ -383,6 +546,8 @@ def get_html_template(current_data, history_links, logo_path_abs, current_json_p
                 document.body.appendChild(script);
             }}, 1500);
             
+            // Initialize Feather Icons
+            feather.replace();
         </script>
     </body>
     </html>

@@ -4,7 +4,9 @@ from PIL import Image, ImageDraw
 import webbrowser
 import os
 import sys
-import runner
+# runner is imported but likely used as module. 
+# tray.py uses runner.run_security_flow()
+from galt.engine import orchestrator as runner
 from plyer import notification
 import threading
 import logging
@@ -25,7 +27,7 @@ def load_icon():
         # Fallback: Generar cuadrado rojo si fallan los assets
         return Image.new('RGB', (64, 64), color = 'red')
 
-from config import get_storage_path
+from galt.core.config import get_storage_path
 
 def run_manual_scan(icon, item):
     """Ejecuta el escaneo en un hilo separado con notificaciones."""

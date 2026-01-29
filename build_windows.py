@@ -40,15 +40,10 @@ args = [
     '--additional-hooks-dir=hooks',
     '--runtime-hook=runtime_hook.py',     # <--- FORCE RUNTIME IMPORT
     # Incluimos todo el código fuente como data por seguridad
-    f'--add-data=sensor_*.py{sep}.',
-    f'--add-data=runner.py{sep}.',
-    f'--add-data=sentinel.py{sep}.',
-    f'--add-data=config.py{sep}.',
     f'--add-data=.env.example{sep}.',
     f'--add-data=app.ico{sep}.',
     f'--add-data=logo.png{sep}.',
-    f'--add-data=core{sep}core',
-    f'--add-data=reports{sep}reports',
+    f'--add-data=galt{sep}galt',
     '--console',
 ]
 

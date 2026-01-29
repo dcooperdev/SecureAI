@@ -1,5 +1,5 @@
 import unittest
-from src.utils.report_formatter import GaltReportFormatter
+from galt.ui.formatter import GaltReportFormatter
 
 class TestGaltReportFormatter(unittest.TestCase):
     

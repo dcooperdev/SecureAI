@@ -62,3 +62,11 @@ def mock_genai():
              
         mock_legacy_model.return_value.generate_content.return_value = mock_response
         yield mock_cls
+
+@pytest.fixture(autouse=True)
+def mock_scapy():
+    """
+    Global mock for Scapy to prevent network sniffing/injection.
+    """
+    with patch.dict("sys.modules", {"scapy.all": MagicMock(), "scapy": MagicMock()}):
+        yield

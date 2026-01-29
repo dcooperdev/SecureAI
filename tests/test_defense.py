@@ -1,6 +1,6 @@
 import pytest
 import platform
-from core.defense import FirewallManager
+from galt.core.defense import FirewallManager
 
 class TestFirewallManager:
     

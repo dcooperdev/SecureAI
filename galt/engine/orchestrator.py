@@ -17,10 +17,11 @@ from datetime import datetime
 
 from google import genai
 from dotenv import load_dotenv
-from config import get_storage_path, get_api_key
-from reports.narrator import OfflineNarrator
-from src.utils.report_formatter import GaltReportFormatter
-import status_manager
+from galt.core.config import get_storage_path, get_api_key
+from galt.ui.narrator import OfflineNarrator
+from galt.ui.formatter import GaltReportFormatter
+from galt.core import status as status_manager
+from galt.engine.bridge import Bridge
 
 load_dotenv()
 
@@ -29,16 +30,6 @@ load_dotenv()
 # --- CONFIGURACIÓN Y UTILIDADES ---
 
 api_key = get_api_key()
-# Configure client safely - if no key, calls will fail and be caught in the try/except block later
-if api_key:
-    client = genai.Client(api_key=api_key)
-else:
-    # Objeto dummy o manejaremos error en uso
-    class DummyClient:
-        class models:
-            def generate_content(*args, **kwargs):
-                raise ValueError("API Key no configurada")
-    client = DummyClient()
 
 def save_json_data(data):
     """Guarda la telemetría estructurada en JSON para futura migración a Firebase."""
@@ -49,7 +40,7 @@ def save_json_data(data):
         json.dump(data, f, indent=2, ensure_ascii=False)
     return filename
 
-import dashboard_generator
+from galt.ui import dashboard as dashboard_generator
 from plyer import notification
 
 # ...
@@ -104,13 +95,13 @@ def run_security_flow():
     print("🛡️  GALT.AI v2: PLATAFORMA INTEGRAL CISO")
     print("="*60)
 
-    # Mapeo: Nombre de archivo -> Clave del Dispatcher en main.py
+    # Mapeo: Nombre del Modulo -> Clave del Dispatcher (Legacy/Frozen)
     sensor_map = {
-        "sensor_procesos.py": "sensor_procesos",
-        "sensor_red.py": "sensor_red",
-        "sensor_sistema.py": "sensor_sistema",
-        "sensor_vulnerabilidades.py": "sensor_vulnerabilidades",
-        "sensor_network_discovery.py": "sensor_network_discovery"
+        "galt.sensors.processes": "sensor_procesos",
+        "galt.sensors.network_basic": "sensor_red",
+        "galt.sensors.system": "sensor_sistema",
+        "galt.sensors.vuln": "sensor_vulnerabilidades",
+        "galt.sensors.network_scan": "sensor_network_discovery"
     }
 
     # En modo compilado/monolito, usamos las claves del dispatcher
@@ -119,12 +110,16 @@ def run_security_flow():
     all_data = []
 
     # 2. Execution & Aggregation
-    for sensor_file, dispatch_key in sensor_map.items():
-        print(f"🚀 Ejecutando módulo: {dispatch_key}...", file=sys.stderr)
+    for module_name, dispatch_key in sensor_map.items():
+        print(f"🚀 Ejecutando módulo: {module_name}...", file=sys.stderr)
         try:
-            # LLAMADA AL DISPATCHER: GaltAI.exe [sensor_key] --local-only
-            # Use specific dispatch key instead of filename
-            command = [sys.executable, dispatch_key, "--local-only"]
+            # DUAL MODE: Frozen vs Source
+            if getattr(sys, 'frozen', False):
+                # Compiled: GaltAI.exe [dispatch_key]
+                command = [sys.executable, dispatch_key, "--local-only"]
+            else:
+                # Source: python -m galt.sensors.xxx
+                command = [sys.executable, "-m", module_name, "--local-only"]
             
             process = subprocess.Popen(
                 command, 
@@ -157,6 +152,18 @@ def run_security_flow():
     if not all_data:
         status_manager.update_status("IDLE", "No se detectaron datos")
         return
+
+    # 2.1 Internal Sensors (Log Sentinel)
+    try:
+        from galt.core.log_watcher import LogSentinel
+        print(f"🚀 Ejecutando módulo interno: LogSentinel...", file=sys.stderr)
+        sentinel = LogSentinel()
+        log_findings = sentinel.scan()
+        if log_findings:
+            all_data.extend(log_findings)
+            print(f"   ✅ LogSentinel: {len(log_findings)} anomalías detectadas.", file=sys.stderr)
+    except Exception as e:
+        print(f"   ⚠️ Fallo en LogSentinel: {e}", file=sys.stderr)
 
     # 3. Scoring
     security_score = 100
@@ -195,48 +202,19 @@ def run_security_flow():
     else:
         change_context = "Postura estable. Sin cambios en el Score."
 
-    # 5. AI Analysis
-    print(f"\n🧠 Galt.ai Intelligence: Analizando con Gemini 2.0 Flash...")
+    # 5. AI Analysis (via Bridge)
+    print(f"\n🧠 Galt.ai Intelligence: Analizando con Bridge (Smart Cache)...")
     print(f"📊 Score: {security_score}/100 (Anterior: {previous_score})")
 
-    SYSTEM_PROMPT = (
-        "ROL: CISO Virtual Galt.ai.\n"
-        f"CONTEXTO: {change_context}\n"
-        f"SCORE: {security_score}/100\n"
-        "\n"
-        "INSTRUCCIONES:\n"
-        "1. Compara la telemetría actual con la anterior.\n"
-        "2. Si el score bajó, explica POR QUÉ (qué puerto/proceso apareció).\n"
-        "3. Si detectas 'Sistemas Espejo' (mismo puerto abierto en local y red), alerta sobre Riesgo Sistémico.\n"
-        "4. Proporciona comandos PowerShell exactos en la sección 'ACCIONES DE 5 MINUTOS'.\n"
-    )
+    bridge = Bridge(data_dir=vault_dir)
+    analysis_result = bridge.get_analysis(all_data, security_score)
     
-    report_text = "⚠️ **Análisis de IA no disponible.**\n\nNo se pudo conectar con Gemini AI. Revise su conexión a internet o su API Key.\nSe muestran los datos crudos a continuación."
-    
-    try:
-        if not os.getenv("GOOGLE_API_KEY"):
-             raise ValueError("Sin API Key configurada.")
-             
-        response = client.models.generate_content(
-            model="gemini-2.0-flash", 
-            contents=f"{SYSTEM_PROMPT}\n\nPREVIO:\n{json.dumps(previous_findings)}\n\nACTUAL:\n{json.dumps(all_data)}"
-        )
-        report_text = response.text
-    except Exception as e:
-        print(f"⚠️ Error generando análisis AI: {e}", file=sys.stderr)
-        
-        # FALLBACK: Offline Narrator
-        print("   🔄 Activando Narrador Offline para generar reporte...")
-        narrator = OfflineNarrator()
-        
-        # Preparar datos para el narrador
-        narrator_data = {
-            "score": security_score,
-            "findings": all_data
-        }
-        
-        report_text = narrator.generate_summary(narrator_data)
-        print("   ✅ Reporte offline generado.")
+    report_text = analysis_result.get("markdown", "")
+    ai_status = analysis_result.get("ai_status", "offline") # online, cached, offline
+
+    print(f"   ℹ️ Estado AI: {ai_status.upper()}")
+    if analysis_result.get("error"):
+         print(f"   ⚠️ Error interno Bridge: {analysis_result['error']}", file=sys.stderr)
 
     # 5.5 Apply HTML Formatting (Backend Side)
     try:
@@ -254,7 +232,8 @@ def run_security_flow():
             "timestamp_human": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "score": security_score,
             "findings": all_data,
-            "ai_analysis_markdown": report_text
+            "ai_analysis_markdown": report_text,
+            "ai_status": ai_status
         }
         
         json_path = save_json_data(final_payload)
@@ -294,7 +273,7 @@ def run_security_flow():
         # --- 6. NOTIFICACIÓN FINAL ---
         # --- 6. NOTIFICACIÓN FINAL (NATIVA) ---
         try:
-            from core.notifier import Notifier
+            from galt.core.notifier import Notifier
             notifier = Notifier()
             
             # Determine icon path safely

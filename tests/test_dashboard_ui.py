@@ -1,7 +1,7 @@
 import pytest
 import os
 import json
-from dashboard_generator import get_html_template
+from galt.ui.dashboard import get_html_template
 from unittest.mock import patch
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def mock_threat_data():
 def test_score_color_critical(mock_threat_data):
     """Test 1: Traffic Light Score - Critical (Red)"""
     mock_threat_data['score'] = 45 
-    with patch("dashboard_generator.glob.glob", return_value=[]):
+    with patch("galt.ui.dashboard.glob.glob", return_value=[]):
         html = get_html_template(mock_threat_data, [], "logo.png")
     
     # Assert the data is correctly embedded in the JS payload
@@ -42,7 +42,7 @@ def test_score_color_critical(mock_threat_data):
 def test_score_color_secure(mock_clean_data):
     """Test 1b: Traffic Light Score - Secure (Green)"""
     mock_clean_data['score'] = 95
-    with patch("dashboard_generator.glob.glob", return_value=[]):
+    with patch("galt.ui.dashboard.glob.glob", return_value=[]):
         html = get_html_template(mock_clean_data, [], "logo.png")
     
     assert '"score": 95' in html or '"score":95' in html
@@ -50,7 +50,7 @@ def test_score_color_secure(mock_clean_data):
 def test_fallback_mode_visuals(mock_threat_data):
     """Test 2: Fallback Rendering - Icons & Hidden Raw Data"""
     # Ensure data is present for JS to render
-    with patch("dashboard_generator.glob.glob", return_value=[]):
+    with patch("galt.ui.dashboard.glob.glob", return_value=[]):
         html = get_html_template(mock_threat_data, [], "logo.png")
     
     assert '"details": "Unknown IP"' in html or '"details":"Unknown IP"' in html
@@ -68,7 +68,7 @@ def test_fallback_mode_visuals(mock_threat_data):
 
 def test_empty_state(mock_clean_data):
     """Test 3: Empty State - System Secure"""
-    with patch("dashboard_generator.glob.glob", return_value=[]):
+    with patch("galt.ui.dashboard.glob.glob", return_value=[]):
         html = get_html_template(mock_clean_data, [], "logo.png")
     
     # Assert JS Logic for empty state is present

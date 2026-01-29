@@ -13,3 +13,5 @@ plyer
 pytest
 pytest-mock
 coverage
+scapy
+markdown

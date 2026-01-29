@@ -1,135 +1,106 @@
-# 🛡️ Galt.ai - CISO Virtual de Élite para PyMEs (Cross-Platform)
+# Galt Security Agent
 
-> **Versión**: v3.0 Universal
-> **Estado**: Producción / Despliegue Crítico  
-> **Soporte de OS**: Windows 10+, Linux (Debian/Ubuntu/CentOS), macOS
-> **Descripción**: Plataforma de ciberseguridad autónoma "Agentic AI" diseñada para auditar, monitorear y mitigar riesgos en tiempo real. Actúa como un CISO (Chief Information Security Officer) virtual las 24 horas del día.
+> **Agente de Ciberseguridad Personal Residente con IA Integrada**
 
----
-
-## 🏗️ Arquitectura Universal
-
-Galt.ai opera bajo una arquitectura descentralizada de **Orquestador + Micro-Sensores** que se adapta nativamente al sistema operativo anfitrión:
-
-1.  **Micro-Sensores Políglotas**: Scripts inteligentes (`sensor_procesos.py`, etc.) que detectan el OS y utilizan comandos nativos para máxima profundidad:
-    *   **Windows**: Usa `netstat`, `tasklist`, `wmic`.
-    *   **Linux**: Usa `ss`, `ip`, `ps`.
-    *   **macOS**: Usa `lsof`, `ifconfig`, `ps`.
-2.  **Orquestador (`runner.py`)**: El cerebro del sistema. Ejecuta los sensores en subprocesos aislados usando el intérprete correcto del sistema, agrega la data y consulta a la IA (Gemini 2.5 Pro).
-3.  **Visualización Moderna**: Una nueva capa de presentación generaDashboards HTML oscuros e interactivos.
-4.  **Bóveda (`/vault`)**: Sistema de persistencia local JSON.
+Galt es un sistema **HIDS (Host-Based Intrusion Detection System)** de última generación diseñado para proteger endpoints mediante una arquitectura híbrida de sensores locales, análisis de logs y un cerebro de IA (Gemini).  
+Su objetivo es actuar como un **CISO Virtual** que monitorea, analiza y educa al usuario sobre su postura de seguridad en tiempo real.
 
 ---
 
-## 🚀 Guía de Instalación
+## 🏗️ Arquitectura del Sistema
 
-Ofrecemos dos métodos de instalación: **Binarios (Rápido)** y **Código Fuente (Desarrollador)**.
+Galt opera bajo un modelo de "Vigilancia Continua + Análisis Profundo", dividiendo sus operaciones en dos modos de ejecución:
 
-### Opción A: Binarios (Recomendado para Usuarios Finales)
+### 1. Flujo de Datos
+`Sensores` ➔ `Orquestador` ➔ `Análisis (IA/Offline)` ➔ `Reporte HTML` ➔ `Notificación`
 
-1.  Ve a la sección de **[Releases](https://github.com/dcooperdev/SecureAI/releases)** en GitHub.
-2.  Descarga el instalador o script apropiado para tu OS:
-    *   **Windows**: Descarga y ejecuta `GaltAI_Setup_v3.0.exe`.
-        *   Instalará el agente como una aplicación nativa.
-        *   Creará accesos directos en el Escritorio.
-    *   **Linux/macOS**: Descarga el archivo comprimido o clona el repo y ejecuta:
-        ```bash
-        ./install.sh
-        ```
+1.  **Sensores**: Scripts autónomos recolectan telemetría (Red, Procesos, Logs).
+2.  **Orquestador (`runner.py`)**: Centraliza los datos, calcula el **Security Score** y decide si invocar a la IA.
+3.  **Cerebro**: 
+    *   **Online**: Google Gemini 2.0 analiza patrones complejos.
+    *   **Offline**: Un motor lógico genera reportes cuando no hay internet o para ahorrar cuota.
+4.  **Salida**: Se genera un Dashboard HTML interactivo y se alerta al usuario vía System Tray.
 
-### Opción B: Código Fuente (Desarrolladores)
+### 2. Dualidad de Ejecución
+*   **Tiempo Real ("Live")**: Hilos en segundo plano (`NetworkSentinel`) monitorean tráfico al vuelo.
+*   **Batch (Agendado)**: El `sentinel.py` ejecuta escaneos profundos cada 1 hora (Plan PRO) o 24 horas (Plan FREE).
 
-Si prefieres ejecutarlo manualmente o contribuir al proyecto:
+---
 
-1.  **Clonar Repo**:
-    ```bash
-    git clone https://github.com/dcooperdev/SecureAI.git
-    cd SecureAI
-    ```
-2.  **Crear entorno virtual**:
-    ```bash
-    # Windows
-    python -m venv venv
-    .\venv\Scripts\activate
+## 🧩 Módulos Clave
 
-    # Linux/Mac
-    python3 -m venv venv
-    source venv/bin/activate
-    ```
-3.  **Instalar dependencias**:
+### 🛡️ Network Sentinel (`core/network.py`)
+El guardián de la red en tiempo real.
+*   Utiliza **Scapy** en modo "Safe Sniffing" (No requiere modo monitor).
+*   Detecta anomalías como **TCP SYN Floods** y ataques de desconexión **Wi-Fi Deauth**.
+*   Opera en un hilo separado para no bloquear la interfaz principal.
+
+### 🕵️ Log Sentinel (`core/log_watcher.py`)
+El auditor forense.
+*   Monitoriza los logs del sistema operativo (Event Viewer en Windows, Syslog en Linux).
+*   **Función Crítica**: Detecta desconexiones Wi-Fi forzadas que la tarjeta de red no puede ver a nivel de paquetes (la "evidencia física" del ataque).
+
+### 🔥 Firewall Manager (`core/defense.py`)
+La capa de respuesta activa.
+*   Capaz de interactuar con el Firewall de Windows (o `iptables` en Linux).
+*   Bloquea automáticamente IPs detectadas como maliciosas por los centinelas.
+
+### 🗣️ Offline Narrator (`reports/narrator.py`)
+El respaldo de inteligencia.
+*   Un motor de plantillas lógicas avanzado.
+*   Genera explicaciones legibles (Human-Readable) de los hallazgos técnicos cuando la IA no está disponible, garantizando que el usuario siempre entienda qué pasó.
+
+### 🔔 Notifier (`core/notifier.py`)
+Sistema de alertas nativo.
+*   Envía notificaciones "Toast" del sistema operativo.
+*   **Click-to-Open**: Integrado mediante XML en Windows para permitir abrir el Dashboard con un clic.
+
+---
+
+## 👨‍💻 Filosofía de Desarrollo
+
+### "Mock Everything"
+El proyecto adopta una estrategia de testing agresiva para garantizar seguridad y velocidad.
+*   **Aislamiento Total**: Los tests (`tests/conftest.py`) utilizan `unittest.mock` para interceptar **todas** las llamadas al sistema (red, subprocesos, archivos).
+*   **Seguridad**: Ejecutar `pytest` **nunca** enviará paquetes reales a la red ni modificará archivos del sistema operativo.
+*   **Eficiencia**: Los tests corren en milisegundos sin necesidad de internet.
+
+### Protección de Cuota
+Respetamos los recursos.
+*   Implementamos **Rate Limiting** físico en el puente de IA (`bridge.py`).
+*   Esto asegura compatibilidad con la capa gratuita de Gemini (15 RPM), previniendo errores de cuota incluso durante pruebas de estrés manuales.
+
+---
+
+## 🚀 Guía de Instalación y Uso
+
+### Requisitos Previos
+*   **Python 3.10+**
+*   **Npcap** (Solo en Windows, para capacidades de sniffing).
+*   Instalar dependencias:
     ```bash
     pip install -r requirements.txt
     ```
-4.  **Configurar**: Crea un archivo `.env` con tu `GOOGLE_API_KEY`.
+
+### Comandos Principales
+
+#### 🛠️ Desarrollo (Ejecución Manual)
+Para correr un análisis completo y generar un reporte bajo demanda:
+```bash
+python runner.py
+```
+
+####  Production (Modo System Tray)
+Para iniciar el agente residente en la barra de tareas (Vigilancia 24/7):
+```bash
+python main.py
+```
+
+#### 🧪 Testing
+Para verificar la integridad del sistema (Mocked):
+```bash
+pytest
+```
 
 ---
-
-## 🎮 Guía de Uso
-
-### 1. Aplicación Instalada (Windows)
-
-Si usaste el instalador `.exe`:
-*   Haz doble clic en el icono **"Galt.ai Security Suite"** en tu escritorio.
-*   Esto abrirá la consola de monitoreo en **Modo Centinela**.
-
-### 2. Línea de Comandos (Linux/Mac/Devs)
-
-*   **Modo Manual (Auditoría Puntual)**:
-    Escaneo único, genera reporte y dashboard.
-    ```bash
-    # Linux/Mac (Install Script)
-    ./galt
-    # Windows/Dev
-    python runner.py
-    ```
-
-*   **Modo Centinela (Vigilancia 24/7)**:
-    Monitoreo continuo en segundo plano. Escanea cada HORA (Plan PRO) o cada 24 HORAS (Plan FREE).
-    ```bash
-    # Linux/Mac
-    ./galt-sentinel
-    # Windows/Dev
-    python sentinel.py
-    ```
-
-*   **Modo Silencioso (CI/CD)**:
-    Útil para cronjobs. No abre el navegador automáticamente.
-    ```bash
-    ./galt --auto
-    ```
-
----
-
-## 📊 Nuevo Dashboard
-
-Galt.ai ahora genera un **Dashboard Interactivo** después de cada escaneo:
-
-*   **Ubicación**: `reports/dashboard.html`
-*   **Características**:
-    *   **Score en Tiempo Real**: Visualización gráfica de tu nivel de seguridad (0-100).
-    *   **Informe AI**: Análisis detallado de Gemini con formato Markdown renderizado.
-    *   **Exportación de Data**: Acceso directo al JSON crudo (`reports/data/scan_*.json`) para integración con SIEM o Firebase.
-
----
-
-## 📡 Capacidades y Planes
-
-El agente detecta automáticamente tu nivel de suscripción (simulado por ahora).
-
-| Plan | Frecuencia de Escaneo | Características |
-| :--- | :--- | :--- |
-| **FREE** | Cada 24 Horas | Escaneo Básico, Dashboard Local. |
-| **PRO** | Cada 1 Hora | Deep Scan (Procesos Ocultos), Alertas Inmediatas. |
-| **PIONEER**| Cada 1 Hora | Acceso anticipado a features (Beta). |
-
----
-
-## 🛠️ Solución de Problemas
-
-*   **Linux/Mac - "Permission Denied"**: Asegúrate de dar permisos de ejecución: `chmod +x galt galt-sentinel`.
-*   **"AccessDenied" en sensores**: Galt ve más si corre como `sudo ./galt` o 'Ejecutar como Administrador'.
-*   **API Key Error**: Edita el archivo `.env` manualmente si te equivocaste al ingresarla o re-ejecuta el instalador.
-
----
-
-**© 2026 Galt.ai Security Division.** *Multi-platform Cyber Defense.*
+**Galt Security Agent** — *Arquitectura Modular para la Ciberseguridad Moderna.*
