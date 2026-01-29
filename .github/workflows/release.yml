@@ -76,13 +76,12 @@ jobs:
         run: |
           pyinstaller --onefile --name galt_linux --clean \
             --hidden-import=dotenv \
-            --add-data "sensor_procesos.py:." \
-            --add-data "sensor_red.py:." \
-            --add-data "sensor_sistema.py:." \
-            --add-data "sensor_vulnerabilidades.py:." \
-            --add-data "sensor_network_discovery.py:." \
-            --add-data "runner.py:." \
-            --add-data "sentinel.py:." \
+            --hidden-import=google \
+            --hidden-import=google.genai \
+            --hidden-import=google.generativeai \
+            --hidden-import=google.ai \
+            --hidden-import=requests \
+            --add-data "galt:galt" \
             --add-data ".env.example:." \
             main.py
 
@@ -125,13 +124,13 @@ jobs:
         run: |
           pyinstaller --onefile --name galt_mac --clean \
             --hidden-import=dotenv \
-            --add-data "sensor_procesos.py:." \
-            --add-data "sensor_red.py:." \
-            --add-data "sensor_sistema.py:." \
-            --add-data "sensor_vulnerabilidades.py:." \
-            --add-data "sensor_network_discovery.py:." \
-            --add-data "runner.py:." \
-            --add-data "sentinel.py:." \
+            --hidden-import=google \
+            --hidden-import=google.genai \
+            --hidden-import=google.generativeai \
+            --hidden-import=google.ai \
+            --hidden-import=requests \
+            --additional-hooks-dir=hooks \
+            --add-data "galt:galt" \
             --add-data ".env.example:." \
             main.py
 
