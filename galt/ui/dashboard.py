@@ -16,6 +16,34 @@ REPORT_DIR = get_storage_path("reports")
 OUTPUT_FILE = os.path.join(REPORT_DIR, 'dashboard.html')
 VAULT_FILE = os.path.join(get_storage_path("vault"), 'reports', 'latest.json')
 
+def update_history_index(new_report_data, filename):
+    """Maintains a JSON index of the last 20 reports for the UI dropdown."""
+    history_path = os.path.join(os.path.dirname(os.path.dirname(BASE_DIR)), 'vault', 'reports', 'history.json')
+    history = []
+
+    # 1. Read existing history
+    if os.path.exists(history_path):
+        try:
+            with open(history_path, 'r') as f:
+                history = json.load(f)
+        except:
+            history = []
+
+    # 2. Prepend new entry
+    entry = {
+        "file": filename,
+        "label": new_report_data.get("timestamp_human", "Unknown Date"),
+        "score": new_report_data.get("score", 0)
+    }
+
+    # Remove duplicates based on filename and keep top 20
+    history = [h for h in history if h['file'] != filename]
+    history.insert(0, entry)
+
+    # 3. Save
+    with open(history_path, 'w') as f:
+        json.dump(history[:20], f, indent=4)
+
 def generate_dashboard(scan_results, ai_analysis_data):
     """
     Toma los datos, lee el template viewer.html, inyecta el JSON y guarda el reporte final.
@@ -36,6 +64,17 @@ def generate_dashboard(scan_results, ai_analysis_data):
     with open(VAULT_FILE, 'w', encoding='utf-8') as f:
         json.dump(full_report, f, indent=4)
 
+    # NEW: Save Timestamped Copy for History
+    timestamp_epoch = scan_results.get('timestamp_epoch', 0)
+    report_filename = f"scan_{timestamp_epoch}.json"
+    timestamp_path = os.path.join(os.path.dirname(VAULT_FILE), report_filename)
+
+    with open(timestamp_path, 'w', encoding='utf-8') as f:
+        json.dump(full_report, f, indent=4)
+
+    # NEW: Update Index
+    update_history_index(full_report, report_filename)
+
     # 3. Leer el Template HTML
     if not os.path.exists(TEMPLATE_PATH):
         print(f"❌ ERROR: No se encontró el template en {TEMPLATE_PATH}")
@@ -44,22 +83,31 @@ def generate_dashboard(scan_results, ai_analysis_data):
     with open(TEMPLATE_PATH, 'r', encoding='utf-8') as f:
         html_content = f.read()
 
-    # 4. Inyectar el JSON en el HTML
-    # Buscamos el marcador /*PYTHON_INJECTION_POINT*/ o la variable INITIAL_DATA
+    # 4. Inyectar el JSON y el Historial en el HTML
     json_str = json.dumps(full_report)
     
-    # Intento 1: Marcador explícito (Más seguro)
-    if "/*PYTHON_INJECTION_POINT*/" in html_content:
-        final_html = html_content.replace("/*PYTHON_INJECTION_POINT*/ null", json_str)
-        final_html = final_html.replace("/*PYTHON_INJECTION_POINT*/", json_str) # Por si acaso
-    else:
-        # Intento 2: Reemplazo por Regex si el usuario no puso el marcador
-        # Busca "const INITIAL_DATA = { ... };" y lo reemplaza
-        pattern = r"const INITIAL_DATA = \{.*?\};"
-        replacement = f"const INITIAL_DATA = {json_str};"
-        # Usamos flags=re.DOTALL para que cubra múltiples líneas
-        final_html = re.sub(pattern, replacement, html_content, flags=re.DOTALL)
+    # Read history for injection
+    history_path = os.path.join(os.path.dirname(os.path.dirname(BASE_DIR)), 'vault', 'reports', 'history.json')
+    history_data = []
+    if os.path.exists(history_path):
+        try:
+            with open(history_path, 'r') as f:
+                history_data = json.load(f)
+        except:
+             pass
+    history_str = json.dumps(history_data)
 
+    # Replace INITIAL_DATA
+    pattern_data = r"const INITIAL_DATA = \{.*?\};"
+    replacement_data = f"const INITIAL_DATA = {json_str};"
+    final_html = re.sub(pattern_data, replacement_data, html_content, flags=re.DOTALL)
+    
+    # Replace HISTORY_DATA (We need to add a placeholder in the HTML first, or rely on regex if it exists)
+    # Strategy: We will add 'const HISTORY_DATA = [];' to the HTML next.
+    pattern_history = r"const HISTORY_DATA = \[.*?\];"
+    replacement_history = f"const HISTORY_DATA = {history_str};"
+    final_html = re.sub(pattern_history, replacement_history, final_html, flags=re.DOTALL)
+         
     # 5. Guardar el HTML Final
     os.makedirs(REPORT_DIR, exist_ok=True)
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:

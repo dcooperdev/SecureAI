@@ -59,19 +59,81 @@ def scan_ports(ip, ports):
             s.close()
     return open_ports
 
-def scan_target(ip, common_ports, results, lock):
+# --- Extended Utility Functions ---
+
+def get_mac_address(ip):
+    """Resolve MAC address using local ARP table."""
+    try:
+        # Windows: arp -a <ip>
+        if platform.system().lower() == "windows":
+            cmd = ["arp", "-a", ip]
+            output = subprocess.check_output(cmd, creationflags=subprocess.CREATE_NO_WINDOW).decode("cp850", errors="ignore") # cp850 specific to some windows locales, or just 'mbcs'
+            import re
+            # Pattern for MAC address (Windows format: 00-11-22...)
+            matches = re.findall(r"([0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2})", output)
+            if matches:
+                return matches[0].replace("-", ":").upper()
+        else:
+            # Linux/Mac implementation (skipped for this Windows-focused MVP, assuming usage on PC-David)
+            pass
+    except Exception:
+        pass
+    return "N/A"
+
+def get_default_gateway():
+    """Get default gateway IP."""
+    try:
+        # Windows specific
+        output = subprocess.check_output("ipconfig", creationflags=subprocess.CREATE_NO_WINDOW).decode("cp850", errors="ignore")
+        import re
+        # Look for "Default Gateway . . . . . . . . . : 192.168.1.1"
+        # Adapting to Spanish/English: "Puerta de enlace predeterminada" or "Default Gateway"
+        lines = output.split('\n')
+        for line in lines:
+            if "0.0.0.0" in line: continue 
+            if "Gateway" in line or "enlace" in line:
+                match = re.search(r"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})", line)
+                if match:
+                    return match.group(1)
+    except:
+        pass
+    return None
+
+def calculate_risk(open_ports, hostname):
+    """Determine risk level text."""
+    risk_score = 0
+    critical_ports = {445: 'SMB', 3389: 'RDP', 5432: 'DB', 22: 'SSH'}
+    
+    exposed = []
+    for p in open_ports:
+        if p in critical_ports:
+            risk_score += 10
+            exposed.append(critical_ports[p])
+    
+    if risk_score >= 10:
+        return f"HIGH ({', '.join(exposed)})"
+    elif open_ports:
+        return f"MEDIUM ({len(open_ports)} ports)"
+    return "LOW"
+
+def scan_target(ip, common_ports, results, lock, gateway_ip):
     if ping_host(ip):
         hostname = resolve_hostname(ip)
         open_ports = scan_ports(ip, common_ports)
+        mac = get_mac_address(ip)
         
-        # Only report if interesting (ports open or hostname found) or just report all active?
-        # User wants "Mirror Systems", so we need to know if they have ports open.
-        
+        is_gw = (ip == gateway_ip)
+        risk_label = calculate_risk(open_ports, hostname)
+        if is_gw: risk_label = "GATEWAY (Critical)"
+
         with lock:
             results.append({
-                "ip": ip,
-                "hostname": hostname,
+                "ip_address": ip, # Renamed from 'ip' to match UI
+                "hostname": hostname or "Unknown",
+                "mac_address": mac,
                 "open_ports": open_ports,
+                "is_gateway": is_gw,
+                "risk_label": risk_label,
                 "status": "ONLINE"
             })
 
@@ -83,9 +145,10 @@ def main():
     PLUGIN_NAME = "sensor_network_discovery"
     
     # "Fingerprinting de Servicios (Top Ports)"
-    COMMON_PORTS = [21, 22, 80, 443, 445, 3389, 5432, 8080, 27017, 139] # Added 139, 27017, 5432 as requested
+    COMMON_PORTS = [21, 22, 80, 443, 445, 3389, 5432, 8080, 27017, 139]
 
     local_ip, subnet_base = get_local_ip_and_subnet()
+    gateway_ip = get_default_gateway()
     
     discovered_hosts = []
     lock = threading.Lock()
@@ -93,28 +156,19 @@ def main():
     # Threaded Ping Sweep
     # Limiting to 254 hosts
     targets = [f"{subnet_base}.{i}" for i in range(1, 255)]
-    # Filter out current host? Or duplicate?
-    # Better to keep it to see if we see ourselves correctly
     
-    # We use a large thread pool for speed
     with ThreadPoolExecutor(max_workers=50) as executor:
         for ip in targets:
-            executor.submit(scan_target, ip, COMMON_PORTS, discovered_hosts, lock)
+            executor.submit(scan_target, ip, COMMON_PORTS, discovered_hosts, lock, gateway_ip)
             
     # Analysis
     severity = "INFO"
-    impact_hint = f"Discovered {len(discovered_hosts)} active hosts in subnet {subnet_base}.0/24."
+    impact_hint = f"Discovered {len(discovered_hosts)} active hosts."
     
-    # Identifying Mirror Systems logic will happen in the Runner/AI (comparing results), 
-    # but we can flag high risk local services here too.
-    
-    suspicious_neighbors = []
-    for host in discovered_hosts:
-        if 445 in host['open_ports'] or 3389 in host['open_ports'] or 5432 in host['open_ports']:
-            suspicious_neighbors.append(host['ip'])
-            
-    if suspicious_neighbors:
-        impact_hint += f" {len(suspicious_neighbors)} neighbors exposing critical ports."
+    # Sort by IP for cleanliness
+    try:
+        discovered_hosts.sort(key=lambda x: int(x['ip_address'].split('.')[-1]))
+    except: pass
 
     timestamp = str(int(time.time()))
     host_id = platform.node()
@@ -128,7 +182,8 @@ def main():
             "severity": severity,
             "data": discovered_hosts,
             "impact_hint": impact_hint,
-            "local_ip": local_ip # Useful for AI context
+            "local_ip": local_ip,
+            "gateway_ip": gateway_ip
         }
     }
     

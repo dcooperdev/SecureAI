@@ -244,6 +244,191 @@
             box-shadow: none;
             opacity: 0.7;
         }
+
+        /* HEADER CONTROLS */
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* DROPDOWN STYLE */
+        .cyber-select-wrapper {
+            position: relative;
+        }
+
+        .cyber-select {
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 8px 30px 8px 15px;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 0.9rem;
+            border-radius: 4px;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            outline: none;
+            min-width: 220px;
+            transition: all 0.3s ease;
+        }
+
+        .cyber-select:hover {
+            background-color: rgba(245, 158, 11, 0.1);
+        }
+
+        .cyber-select-wrapper::after {
+            content: '▼';
+            font-size: 0.7rem;
+            color: var(--accent);
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        /* SCAPY BUTTON */
+        .btn-scapy {
+            background: transparent;
+            border: 1px solid #3b82f6;
+            color: #3b82f6;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .btn-scapy:hover {
+            background: rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+        }
+
+        /* SCANNING SPINNER */
+        .scan-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text);
+            font-size: 0.85rem;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .scan-indicator.active {
+            opacity: 1;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--accent);
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* NETWORK MODAL */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: var(--card);
+            border: 1px solid var(--accent);
+            width: 80%;
+            max-width: 900px;
+            max-height: 80vh;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .net-table-container {
+            overflow-y: auto;
+            flex-grow: 1;
+            border: 1px solid var(--border);
+        }
+
+        .net-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .net-table th {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--accent);
+            padding: 10px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+        }
+
+        .net-table td {
+            border-bottom: 1px solid var(--border);
+            padding: 8px;
+            color: #cbd5e1;
+        }
+
+        .net-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 15px;
+        }
+
+        .btn-close {
+            background: transparent;
+            border: none;
+            color: var(--danger);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -251,12 +436,29 @@
 
     <div class="container">
         <div class="header">
-            <div style="display:flex; align-items:center; gap:15px;">
-                <i data-feather="shield"></i>
-                <h1>GALT SECURITY CENTER</h1>
-            </div>
             <div style="display:flex; align-items:center; gap:20px;">
-                <span class="timestamp" id="timestamp">--:--</span>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <i data-feather="shield" style="width:28px; height:28px;"></i>
+                    <h1>GALT SECURITY CENTER</h1>
+                </div>
+                <div id="scan-indicator" class="scan-indicator">
+                    <div class="spinner"></div>
+                    <span style="color: var(--accent); letter-spacing: 1px;">ESCANEANDO RED...</span>
+                </div>
+            </div>
+
+            <div class="header-controls">
+                <div class="cyber-select-wrapper">
+                    <select id="report-selector" class="cyber-select" onchange="loadSelectedReport()">
+                        <option value="latest">Cargando historial...</option>
+                    </select>
+                </div>
+
+                <button onclick="openScapyViewer()" class="btn-scapy">
+                    <i data-feather="radio"></i>
+                    SENSOR SCAPY
+                </button>
+
                 <span class="status-badge" id="ai-status">● CONECTANDO...</span>
             </div>
         </div>
@@ -325,36 +527,159 @@
 
         </div>
     </div>
+    </div>
+
+    <!-- NETWORK MODAL -->
+    <div id="net-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="margin:0; border:none;"><i data-feather="globe"></i> VISOR DE RED (SENSOR SCAPY)</h2>
+                <button class="btn-close" onclick="closeScapyViewer()">&times;</button>
+            </div>
+
+            <div class="net-table-container">
+                <table class="net-table">
+                    <thead>
+                        <tr>
+                            <th>IP Address</th>
+                            <th>Hostname</th>
+                            <th>MAC Address</th>
+                            <th>Ports</th>
+                            <th>Est. Connections</th>
+                            <th>Risk</th>
+                        </tr>
+                    </thead>
+                    <tbody id="net-table-body">
+                    </tbody>
+                </table>
+            </div>
+            <div style="text-align:right; font-size:0.8rem; color:#64748b;">
+                * Datos obtenidos en tiempo real del sensor_network_discovery.py
+            </div>
+        </div>
+    </div>
 
     <script>
         // ==========================================
         // 1. DATA STORE & CONFIG
         // ==========================================
 
-        // Aquí pegamos tu JSON real para que funcione al instante (Fallback Data)
+        // --- INJECTION POINTS ---
+        // These are replaced by Python at generation time
         const INITIAL_DATA = {
-            "score": 60,
-            "score_reasoning": "The score is 60 due to the presence of high severity vulnerabilities (open SMB and PostgreSQL ports) which significantly increase the risk of exploitation and potential ransomware attacks. While other findings are informational, these critical ports drive the overall risk assessment.",
-            "timestamp_human": "2026-02-03 19:40:05",
-            "open_ports": [135, 139, 80, 22, 5432, 443, 445],
-            "ai_status": "online",
-            "ai_analysis": {
-                "summary": "The scan reveals a high-severity risk due to exposed SMB (port 445) and PostgreSQL (port 5432) services on the host PC-DAVID. These open ports present a significant ransomware risk and potential for unauthorized access.",
-                "critical_risks": [
-                    { "id": "port_445", "title": "SMB Exposure", "severity": "High", "fix": "Close port" },
-                    { "id": "port_5432", "title": "PostgreSQL Exposure", "severity": "High", "fix": "Restrict access and close port if not needed" }
-                ],
-                "recommendations": [
-                    "Close or restrict access to port 445 (SMB) to mitigate ransomware risk.",
-                    "Review and restrict access to port 5432 (PostgreSQL). Ensure strong authentication is in place."
-                ]
-            },
-            "findings": [
-                { "plugin": "sensor_vulnerabilidades", "severity": "HIGH", "impact_hint": "Open ports detected: [445, 5432]. Ransomware Risk." },
-                { "plugin": "sensor_network_discovery", "severity": "INFO", "impact_hint": "Discovered 3 active hosts in subnet." },
-                { "plugin": "sensor_sistema", "severity": "INFO", "impact_hint": "Active user: DeusEx. OS: Windows 10." }
-            ]
+            "timestamp_human": "Loading...",
+            "score": 0,
+            "ai_analysis": { "summary": "Please wait..." },
+            "findings": []
         };
+        const HISTORY_DATA = [];
+
+        // 1. Load History (Hybrid: Injection + Fetch)
+        async function loadHistory() {
+            const selector = document.getElementById('report-selector');
+            selector.innerHTML = '';
+
+            // Add "Latest" Option
+            let optionLatest = document.createElement('option');
+            optionLatest.value = './vault/reports/latest.json';
+            optionLatest.text = "⚡ Último Escaneo (En Vivo)";
+            selector.add(optionLatest);
+
+            // TRY INJECTED DATA FIRST (Fixes offline/CORS issues)
+            if (typeof HISTORY_DATA !== 'undefined' && HISTORY_DATA.length > 0) {
+                HISTORY_DATA.forEach(h => {
+                    let option = document.createElement('option');
+                    option.value = './vault/reports/' + h.file;
+                    option.text = `📅 ${h.label} (Score: ${h.score})`;
+                    selector.add(option);
+                });
+                return;
+            }
+
+            // Fallback to Fetch (Reference User Requirement, though Injection covers 99% of cases now)
+            try {
+                const response = await fetch('./vault/reports/history.json');
+                if (!response.ok) throw new Error("No history found");
+                const history = await response.json();
+                history.forEach(h => {
+                    let option = document.createElement('option');
+                    option.value = './vault/reports/' + h.file;
+                    option.text = `📅 ${h.label} (Score: ${h.score})`;
+                    selector.add(option);
+                });
+            } catch (e) {
+                console.warn("History load failed (first run or offline mode)");
+            }
+        }
+
+        // 2. Handle Dropdown Change
+        async function loadSelectedReport() {
+            const selector = document.getElementById('report-selector');
+            const url = selector.value;
+
+            if (url.includes('latest.json')) {
+                startPoller(); // Resume live updates
+            } else {
+                stopPoller(); // Stop live updates to view static file
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    renderDashboard(data);
+                } catch (e) { alert("Error loading report: " + e); }
+            }
+        }
+
+        // 3. Scapy Modal Actions
+        function openScapyViewer() {
+            const modal = document.getElementById('net-modal');
+            const tbody = document.getElementById('net-table-body');
+            tbody.innerHTML = '';
+
+            // Extract Network Data from logic
+            // We look into 'findings' where plugin == 'sensor_network_discovery'
+            // We assume Current Data (INITIAL_DATA or loaded via fetch) is stored in global 'currentRenderData' (Need to add this tracking)
+            // Or just grab it from DOM? Better to use a global state.
+
+            // NOTE: Since I don't have a specific global state var for 'current data', 
+            // I will rely on the fact that renderDashboard is called. 
+            // I'll add 'window.currentData = data' inside renderDashboard.
+
+            const data = window.currentData || INITIAL_DATA;
+
+            const networkFindings = (data.findings || []).filter(f => f.plugin === 'sensor_network_discovery');
+
+            if (networkFindings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">No hay datos de red disponibles en este reporte.</td></tr>';
+            } else {
+                networkFindings.forEach(f => {
+                    // Each finding usually has "result": { "data": [List of devices] }
+                    const devices = f.result?.data || [];
+                    devices.forEach(d => {
+                        let riskStyle = 'color:#cbd5e1';
+                        if (d.risk_label && d.risk_label.includes('HIGH')) riskStyle = 'color:var(--danger); font-weight:bold;';
+                        if (d.risk_label && d.risk_label.includes('GATEWAY')) riskStyle = 'color:var(--accent); font-weight:bold;';
+
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${d.ip_address || 'N/A'}</td>
+                                <td style="color:#fff">${d.hostname || 'Unknown'}</td>
+                                <td>${d.mac_address || 'N/A'}</td>
+                                <td>${(d.open_ports || []).join(', ') || '-'}</td>
+                                <td>-</td> 
+                                <td style="${riskStyle}">${d.risk_label || 'Low'}</td>
+                            </tr>
+                         `;
+                    });
+                });
+            }
+
+            modal.classList.add('open');
+        }
+
+        function closeScapyViewer() {
+            document.getElementById('net-modal').classList.remove('open');
+        }
+
 
         // Configuración del Poller
         const POLLING_INTERVAL_MS = 5000; // 5 segundos
@@ -369,10 +694,22 @@
         // ==========================================
 
         function renderDashboard(data) {
+            window.currentData = data; // Store for Modal
             console.log("🎨 Rendering Dashboard with data:", data);
 
-            // 1. Header Info
-            document.getElementById('timestamp').innerText = data.timestamp_human || new Date().toLocaleString();
+            const spinner = document.getElementById('scan-indicator');
+            if (data.status === 'scanning') {
+                spinner.classList.add('active');
+            } else {
+                spinner.classList.remove('active');
+            }
+
+            // 1. Header Info: Timestamp is now optional or part of the specific report data
+            const timestampEl = document.getElementById('timestamp');
+            if (timestampEl) {
+                timestampEl.innerText = data.timestamp_human || new Date().toLocaleString();
+            }
+
             const statusBadge = document.getElementById('ai-status');
             if (data.ai_status === 'online') {
                 statusBadge.innerHTML = '● IA ACTIVA';
@@ -504,17 +841,23 @@
                 const jsonData = await response.json();
                 renderDashboard(jsonData);
             } catch (e) {
-                console.warn("⚠️ Poller: No se encontró 'latest.json' o backend offline. Usando datos en memoria.");
-                // Si falla, no rompemos, simplemente no actualizamos 
-                // (o podríamos forzar el render inicial si es la primera vez)
+                console.warn("⚠️ Poller: No se encontró 'latest.json' o backend offline.", e);
             }
         }
 
         function startPoller() {
-            // Render inicial inmediato con los datos que pegaste
-            renderDashboard(INITIAL_DATA);
+            // Render inicial inmediato CON LOS DATOS INYECTADOS
+            // (Evita pantalla vacía si el fetch falla)
+            if (typeof INITIAL_DATA !== 'undefined') {
+                renderDashboard(INITIAL_DATA);
+            }
 
-            // Iniciar ciclo
+            // Iniciar ciclo SOLO si no es file://
+            if (window.location.protocol === 'file:') {
+                console.log("⚠️ Modo FILE detectado: Polling desactivado para evitar errores CORS.");
+                return;
+            }
+
             console.log("⏱️ Poller iniciado cada", POLLING_INTERVAL_MS, "ms");
             pollingInterval = setInterval(fetchData, POLLING_INTERVAL_MS);
         }
@@ -532,6 +875,7 @@
         // ==========================================
 
         document.addEventListener('DOMContentLoaded', () => {
+            loadHistory();
             startPoller();
         });
 

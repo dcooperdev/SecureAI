@@ -51,6 +51,25 @@ def run_security_flow():
     # INICIO
     status_manager.update_status("SCANNING", "Iniciando análisis...")
     
+    # FIX: Initialize 'latest.json' with scanning state so UI spinner activates
+    try:
+        vault_dir = get_storage_path("vault")
+        reports_dir = os.path.join(vault_dir, "reports")
+        if not os.path.exists(reports_dir): os.makedirs(reports_dir)
+        latest_file = os.path.join(reports_dir, 'latest.json')
+        
+        with open(latest_file, 'w', encoding='utf-8') as f:
+            json.dump({
+                "status": "scanning",
+                "timestamp_human": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "score": 0,
+                "ai_status": "offline",
+                "ai_analysis": {"summary": "Análisis en curso..."},
+                "findings": []
+            }, f, indent=4)
+    except Exception as e:
+        print(f"⚠️ Could not write initial scanning state: {e}", file=sys.stderr)
+    
     # 0. Argument Parser
     parser = argparse.ArgumentParser()
     parser.add_argument("--auto", action="store_true", help="Modo automático (sin pop-ups a menos que sea crítico)")
