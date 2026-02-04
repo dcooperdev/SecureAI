@@ -54,7 +54,7 @@ def generate_dashboard(scan_results, ai_analysis_data):
         "score": scan_results.get('score', 0),
         "score_reasoning": scan_results.get('score_reasoning', {}),
         "open_ports": scan_results.get('open_ports', []),
-        "ai_status": "online" if ai_analysis_data else "offline",
+        "ai_status": scan_results.get('ai_status', "online" if ai_analysis_data else "offline"),
         "ai_analysis": ai_analysis_data or {},
         "findings": scan_results.get('findings', [])
     }

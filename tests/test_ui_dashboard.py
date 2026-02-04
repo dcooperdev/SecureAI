@@ -24,21 +24,15 @@ def test_dashboard_history_injection():
     scan_results = {
         "timestamp_human": "2024-01-01 12:00:00",
         "score": 90,
-        "findings": []
+        "findings": [],
+        "timestamp_epoch": 999
     }
     ai_data = {"summary": "Test"}
-    
-    # Mock template reading
-    mock_html = """
-    <html>
-    const HISTORY_DATA = [];
-    </html>
-    """
     
     with patch("builtins.open", new_callable=MagicMock) as mock_open_func:
         # Create a mock file handle that behaves like a file
         mock_file_handle = MagicMock()
-        mock_file_handle.read.return_value = mock_html
+        mock_file_handle.read.return_value = "[]" # Mock reading empty history
         mock_file_handle.__enter__.return_value = mock_file_handle
         
         # Ensure open() returns this handle when called
@@ -55,23 +49,18 @@ def test_dashboard_history_injection():
                      
                      # Verify the replacement happened in the write call
                      # The handle was reused, so we check the write calls
-                     args, _ = mock_file_handle.write.call_args
-                     written_content = args[0]
-                     assert 'const HISTORY_DATA = [{"file": "old.json"' in written_content
+                     # Iterate over all writes to find the JS content
+                     all_writes = ""
+                     for call in mock_file_handle.write.call_args_list:
+                         all_writes += str(call.args[0])
+                    
+                     # Check for JS Content
+                     assert 'window.GALT_LATEST_REPORT' in all_writes
+                     assert 'window.GALT_HISTORY_INDEX' in all_writes
+                     assert '"file": "old.json"' in all_writes
 
-# Simpler String Check
-def test_history_injection_regex():
-    import re
-    html_content = "const HISTORY_DATA = [];"
-    history_data = [{"file": "scan_123.json", "label": "Yesterday", "score": 50}]
-    history_str = json.dumps(history_data)
-    
-    pattern_history = r"const HISTORY_DATA = \[.*?\];"
-    replacement_history = f"const HISTORY_DATA = {history_str};"
-    final_html = re.sub(pattern_history, replacement_history, html_content, flags=re.DOTALL)
-    
-    assert 'const HISTORY_DATA = [{"file": "scan_123.json"' in final_html
-    assert 'const HISTORY_DATA = [];' not in final_html
+# Remove obsolete regex tests
+# def test_history_injection_regex(): ...
 
 def test_viewer_html_has_modal():
     # Verify the viewer.html file actually has the modal code
