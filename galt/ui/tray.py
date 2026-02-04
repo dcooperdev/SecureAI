@@ -67,9 +67,11 @@ def open_dashboard(icon=None, item=None):
         report_dir = get_storage_path("reports")
         dashboard_path = os.path.join(report_dir, "dashboard.html")
         
-        # Check if dashboard.html exists, otherwise fallback to latest scan
+        # Check if dashboard.html exists, otherwise fallback to debug_console or latest scan
         if os.path.exists(dashboard_path):
             latest_report = dashboard_path
+        elif os.path.exists(os.path.join(report_dir, "debug_console.html")):
+            latest_report = os.path.join(report_dir, "debug_console.html")
         else:
             files = [f for f in os.listdir(report_dir) if f.endswith('.html')]
             if not files:

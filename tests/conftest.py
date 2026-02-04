@@ -49,7 +49,7 @@ def mock_genai():
     # Create a mock client structure that allows client.models.generate_content(...)
     mock_client_instance = MagicMock()
     mock_response = MagicMock()
-    mock_response.text = "Mocked AI Analysis: System appears secure."
+    mock_response.text = '{"summary": "Mocked AI Analysis: System appears secure.", "critical_risks": [], "recommendations": []}'
     
     msg_chain = MagicMock()
     msg_chain.generate_content.return_value = mock_response

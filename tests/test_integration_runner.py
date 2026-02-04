@@ -2,20 +2,20 @@ import pytest
 from unittest.mock import MagicMock, patch
 from galt.engine import orchestrator as runner
 
-# FIX: Apuntamos a 'get_html_template' que es el nombre real en tu código
-@patch('galt.engine.orchestrator.dashboard_generator.get_html_template')
+# FIX: Apuntamos a 'generate_dashboard' que es el nombre real en tu código
+@patch('galt.engine.orchestrator.dashboard_generator.generate_dashboard')
 @patch('galt.engine.orchestrator.status_manager.update_status')
 @patch('galt.engine.orchestrator.notification.notify')
 @patch('subprocess.Popen')
 @patch('builtins.open')
-def test_run_security_flow_structure(mock_open, mock_subprocess, mock_notify, mock_update_status, mock_get_html):
+def test_run_security_flow_structure(mock_open, mock_subprocess, mock_notify, mock_update_status, mock_generate_dashboard):
     """
     Test Integration: verifica el flujo principal mockeando dependencias externas.
     Asegura que el sistema reporta SCANNING al inicio y IDLE/ERROR al final.
     """
     # 1. Configurar Mocks
-    # Simulamos que el generador devuelve un HTML simple
-    mock_get_html.return_value = "<html>Mock Dashboard</html>"
+    # Simulamos que el generador devuelve una ruta de archivo
+    mock_generate_dashboard.return_value = "c:\\mock\\report.html"
     
     # Simulamos que los sensores (subprocess) devuelven JSON vacío "[]"
     process_mock = MagicMock()

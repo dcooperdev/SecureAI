@@ -58,7 +58,7 @@ def test_bridge_smart_caching(tmp_path, mock_genai):
              result = bridge.get_analysis(findings, score)
              
              assert result["ai_status"] == "online"
-             assert "Mocked AI Analysis" in result["markdown"]
+             assert "Mocked AI Analysis" in result["json_report"]["summary"]
              assert result["used_cache"] is False
 
              # 2. Second Run (Same Data) -> Should use Cache
@@ -67,7 +67,7 @@ def test_bridge_smart_caching(tmp_path, mock_genai):
              
              assert result_2["ai_status"] == "cached"
              assert result_2["used_cache"] is True
-             assert result_2["markdown"] == result["markdown"]
+             assert result_2["json_report"]["summary"] == result["json_report"]["summary"]
              
              # 3. Third Run (Changed Data) -> Should call AI
              findings_changed = [{"port": 80, "service": "http"}, {"port": 443}]

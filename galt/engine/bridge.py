@@ -106,34 +106,31 @@ class Bridge:
         if not has_changed and last_state and last_state.get("narrative"):
             logger.info("Smart Cache: Sin cambios detectados. Reutilizando narrativa.")
             return {
-                "markdown": last_state["narrative"],
-                "ai_status": "cached", # 🟠 IA Cached (usaremos 'cached' para UI)
+                "json_report": last_state["narrative"], # Renamed from markdown to json_report
+                "ai_status": "cached",
                 "score": current_score,
                 "used_cache": True
             }
 
         # CASO B: Cambios o Cache Miss -> Llamar a IA
-        logger.info(f"Cambios detectados (Changed={has_changed}, Improvement={bool(improvement_msg)}). Solicitando análisis a Gemini...")
+        logger.info(f"Cambios detectados. Solicitando análisis a Gemini...")
         
         prompt_context = "Analiza estos hallazgos de seguridad."
         if improvement_msg:
             prompt_context += f"\n\nNOTA DE CONTEXTO: {improvement_msg}"
-        elif last_state:
-            prompt_context += f"Cambios detectados respecto al escaneo anterior."
 
         try:
             if not self.client:
                 raise ValueError("Cliente Gemini no inicializado (Falta API Key)")
 
-            response = self._call_gemini(clean_current, current_score, prompt_context)
-            narrative = response
+            response_json_obj = self._call_gemini(clean_current, current_score, prompt_context)
             
-            # Guardar nuevo estado
-            self._save_state(current_findings, current_score, narrative)
+            # Guardar nuevo estado (narrative is now a dict)
+            self._save_state(current_findings, current_score, response_json_obj)
             
             return {
-                "markdown": narrative,
-                "ai_status": "online", # 🟢 IA Online
+                "json_report": response_json_obj, # Return Dict
+                "ai_status": "online",
                 "score": current_score,
                 "used_cache": False
             }
@@ -141,29 +138,26 @@ class Bridge:
         except Exception as e:
             logger.error(f"Fallo en llamada a IA: {e}")
             # CASO C: Fallback / Error
-            fallback_narrative = self._get_fallback_narrative(current_score, e)
+            fallback_json = self._get_fallback_narrative(current_score, e)
             return {
-                "markdown": fallback_narrative,
-                "ai_status": "offline", # 🔴 IA No Disponible
-
+                "json_report": fallback_json,
+                "ai_status": "offline",
                 "score": current_score,
                 "error": str(e)
             }
 
     def _call_gemini(self, findings, score, context_msg):
-        # Sistema de Prompting
+        # Sistema de Prompting JSON STRICT
         system_prompt = f"""
-        Eres Galt.ai, un CISO Virtual para PyMEs.
-        Tu misión es traducir datos técnicos JSON a consejos de negocio en ESPAÑOL.
-        
-        SCORE ACTUAL: {score}/100
-        
-        REGLAS:
-        1. Tono: Profesional, directo y accesible. Evita jerga innecesaria.
-        2. Prioridad: Enfócate en Dinero (Impacto financiero), Continuidad del Negocio y Privacidad.
-        3. Formato: Usa Markdown robusto (negritas para énfasis, listas para pasos).
-        4. Si el Score es bajo, sé urgente pero constructivo.
-        5. {context_msg}
+        You are a Cybersecurity Engine. Analyze the scan data. 
+        Return ONLY valid JSON adhering to this schema: 
+        {{ 
+            "summary": "Brief executive summary string", 
+            "score_reasoning": "Why is the score {score}?", 
+            "critical_risks": [{{"id": "port_445", "title": "SMB Exposure", "severity": "High", "fix": "Close port"}}], 
+            "recommendations": ["Action 1", "Action 2"] 
+        }} 
+        Do not use Markdown formatting. Do not wrap in ```json code blocks.
         """
         
         content = f"DATOS TÉCNICOS:\n{json.dumps(findings, indent=2)}"
@@ -172,47 +166,32 @@ class Bridge:
             model=LLM_MODEL,
             contents=system_prompt + "\n\n" + content
         )
-        return response.text
+        
+        # Clean and Parse
+        raw_text = response.text.replace('```json', '').replace('```', '').strip()
+        try:
+            return json.loads(raw_text)
+        except json.JSONDecodeError:
+            # Fallback for malformed JSON
+            logger.error("JSON PARSE ERROR on AI Response. Returning RAW wrapper.")
+            return {"error": "Invalid JSON from AI", "raw_output": raw_text}
 
     def _get_fallback_narrative(self, score, error=None):
         """
-        Genera una narrativa offline basada en reglas estáticas en lugar de mostrar errores.
+        Genera un JSON offline.
         """
-        logger.warning(f"Generando narrativa offline. Razón: {error}")
+        logger.warning(f"Generando JSON offline. Razón: {error}")
         
-        narrative = ""
+        status = "Secure"
+        if score < 60: status = "Critical"
+        elif score < 90: status = "Warning"
         
-        if score < 60:
-            narrative = """
-            ### ⚠️ MODO OFFLINE: Riesgos Críticos Detectados
-            
-            El sistema de IA no está disponible temporalmente, pero el análisis estático ha detectado **configuraciones peligrosas**.
-            
-            **ACCIONES INMEDIATAS RECOMENDADAS:**
-            1. Revise los puertos abiertos (especialmente 445, 3389).
-            2. Verifique si hay software obsoleto.
-            3. Consulte la pestaña "Detalles Técnicos" para ver los hallazgos exactos.
-            """
-        elif score < 90:
-            narrative = """
-            ### 🟠 MODO OFFLINE: Riesgo Moderado
-            
-            El sistema opera con reglas locales. Se han detectado algunos problemas de configuración que reducen su nivel de seguridad.
-            
-            **Recomendación:**
-            - Cierre puertos no utilizados.
-            - Mantenga su firewall activo.
-            """
-        else:
-            narrative = """
-            ### ✅ MODO OFFLINE: Sistema Seguro
-            
-            Según las reglas estáticas locales, su sistema parece estar limpio y configurado correctamente.
-            
-            *La inteligencia artificial se reconectará automáticamente cuando esté disponible para un análisis más profundo.*
-            """
-            
-        return narrative
+        return {
+            "summary": f"Offline Mode Active. System Status: {status}. Static analysis detected issues.",
+            "score_reasoning": f"Score is {score}/100 based on local rules.",
+            "critical_risks": [{"id": "offline_error", "title": "AI Offline", "severity": "Info", "fix": str(error)}],
+            "recommendations": ["Check internet connection", "Verify API Key", "Review local firewall rules manually"]
+        }
 
 if __name__ == "__main__":
     # Test rápido

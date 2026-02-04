@@ -1,4 +1,5 @@
 .env
+.coverage
 
 # Virtual environment
 .venv/
@@ -13,3 +14,4 @@ reports/data/
 # PyInstaller
 build/
 dist/
+vault/*

@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galt Security Center</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <style>
+        /* --- TEMA BLUE & GOLD (Cybersecurity Style) --- */
+        :root {
+            --bg: #0f172a;
+            /* Navy Profundo */
+            --card: #1e293b;
+            /* Azul Medianoche */
+            --text: #e2e8f0;
+            /* Blanco Hueso */
+            --accent: #f59e0b;
+            /* Oro de Advertencia */
+            --danger: #ef4444;
+            /* Rojo Alerta */
+            --success: #22c55e;
+            /* Verde Seguro */
+            --border: #334155;
+            /* Borde Sutil */
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', Roboto, Helvetica, sans-serif;
+            margin: 0;
+            padding: 20px;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            gap: 20px;
+            grid-template-columns: 300px 1fr;
+            /* Sidebar izquierdo (Score) y Contenido */
+            grid-template-areas:
+                "header header"
+                "score main";
+        }
+
+        /* --- HEADER (Cinta Amarilla) --- */
+        .header {
+            grid-area: header;
+            background: linear-gradient(90deg, #b45309 0%, var(--accent) 50%, #b45309 100%);
+            color: #000;
+            padding: 15px 30px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(245, 158, 11, 0.2);
+            /* Efecto cinta */
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .timestamp {
+            font-weight: 600;
+            font-family: monospace;
+        }
+
+        /* --- CARDS GENERALES --- */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            /* Borde superior brillante */
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0.5;
+        }
+
+        /* --- SCORE BOX (Izquierda) --- */
+        .score-area {
+            grid-area: score;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .gauge-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+        }
+
+        .score-val {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem;
+            font-weight: 800;
+            color: var(--text);
+            text-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+        }
+
+        .score-label {
+            text-align: center;
+            font-size: 1.2rem;
+            color: var(--accent);
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 10px;
+        }
+
+        /* --- MAIN CONTENT (Derecha) --- */
+        .main-content {
+            grid-area: main;
+            display: grid;
+            gap: 20px;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        h2 {
+            color: var(--accent);
+            margin-top: 0;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+
+        /* --- AI SUMMARY --- */
+        .ai-summary {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #cbd5e1;
+            background: rgba(15, 23, 42, 0.5);
+            padding: 15px;
+            border-left: 4px solid var(--accent);
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* --- RISKS TABLE --- */
+        .risk-item {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .risk-title {
+            font-weight: bold;
+            color: #fca5a5;
+        }
+
+        .risk-badge {
+            background: var(--danger);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .risk-fix {
+            display: block;
+            margin-top: 5px;
+            font-size: 0.9rem;
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        /* --- RECOMENDACIONES --- */
+        .rec-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .rec-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            gap: 10px;
+        }
+
+        .rec-list li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        /* --- CHART --- */
+        .chart-container {
+            height: 250px;
+            width: 100%;
+        }
+
+        /* --- STATUS BADGE --- */
+        .status-badge {
+            background: #000;
+            color: var(--success);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-family: monospace;
+            border: 1px solid var(--success);
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
+            font-size: 0.9rem;
+        }
+
+        .status-badge.offline {
+            color: var(--danger);
+            border-color: var(--danger);
+            box-shadow: none;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <i data-feather="shield"></i>
+                <h1>GALT SECURITY CENTER</h1>
+            </div>
+            <div style="display:flex; align-items:center; gap:20px;">
+                <span class="timestamp" id="timestamp">--:--</span>
+                <span class="status-badge" id="ai-status">● CONECTANDO...</span>
+            </div>
+        </div>
+
+        <div class="score-area">
+            <div class="card">
+                <div class="gauge-container">
+                    <canvas id="scoreChart"></canvas>
+                    <div class="score-val" id="score-val">--</div>
+                </div>
+                <div class="score-label" id="score-label">ANÁLISIS EN CURSO</div>
+            </div>
+
+            <div class="card">
+                <h2><i data-feather="activity"></i> Puertos Abiertos</h2>
+                <div class="chart-container">
+                    <canvas id="portsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+
+            <div class="card full-width">
+                <h2><i data-feather="cpu"></i> Análisis del CISO Virtual (Gemma-3)</h2>
+                <div id="ai-summary" class="ai-summary">
+                    Esperando datos del motor de IA...
+                </div>
+            </div>
+
+            <div class="card full-width">
+                <h2><i data-feather="info"></i> Razones del Score</h2>
+                <div id="score-reasoning" class="ai-summary">
+                    Esperando datos del motor de IA...
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><i data-feather="alert-triangle"></i> Riesgos Críticos Detectados</h2>
+                <div id="risks-container">
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><i data-feather="check-circle"></i> Plan de Acción Inmediato</h2>
+                <ul class="rec-list" id="rec-container">
+                </ul>
+            </div>
+
+            <div class="card full-width">
+                <h2><i data-feather="terminal"></i> Hallazgos Técnicos (Raw Data)</h2>
+                <div
+                    style="max-height: 150px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; color: #94a3b8;">
+                    <table style="width:100%; text-align:left; border-collapse: collapse;">
+                        <thead>
+                            <tr style="color:var(--accent)">
+                                <th>Plugin</th>
+                                <th>Severidad</th>
+                                <th>Detalle</th>
+                            </tr>
+                        </thead>
+                        <tbody id="findings-table"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. DATA STORE & CONFIG
+        // ==========================================
+
+        // Aquí pegamos tu JSON real para que funcione al instante (Fallback Data)
+        const INITIAL_DATA = {
+            "score": 60,
+            "score_reasoning": "The score is 60 due to the presence of high severity vulnerabilities (open SMB and PostgreSQL ports) which significantly increase the risk of exploitation and potential ransomware attacks. While other findings are informational, these critical ports drive the overall risk assessment.",
+            "timestamp_human": "2026-02-03 19:40:05",
+            "open_ports": [135, 139, 80, 22, 5432, 443, 445],
+            "ai_status": "online",
+            "ai_analysis": {
+                "summary": "The scan reveals a high-severity risk due to exposed SMB (port 445) and PostgreSQL (port 5432) services on the host PC-DAVID. These open ports present a significant ransomware risk and potential for unauthorized access.",
+                "critical_risks": [
+                    { "id": "port_445", "title": "SMB Exposure", "severity": "High", "fix": "Close port" },
+                    { "id": "port_5432", "title": "PostgreSQL Exposure", "severity": "High", "fix": "Restrict access and close port if not needed" }
+                ],
+                "recommendations": [
+                    "Close or restrict access to port 445 (SMB) to mitigate ransomware risk.",
+                    "Review and restrict access to port 5432 (PostgreSQL). Ensure strong authentication is in place."
+                ]
+            },
+            "findings": [
+                { "plugin": "sensor_vulnerabilidades", "severity": "HIGH", "impact_hint": "Open ports detected: [445, 5432]. Ransomware Risk." },
+                { "plugin": "sensor_network_discovery", "severity": "INFO", "impact_hint": "Discovered 3 active hosts in subnet." },
+                { "plugin": "sensor_sistema", "severity": "INFO", "impact_hint": "Active user: DeusEx. OS: Windows 10." }
+            ]
+        };
+
+        // Configuración del Poller
+        const POLLING_INTERVAL_MS = 5000; // 5 segundos
+        const DATA_SOURCE_URL = './vault/reports/latest.json'; // Donde el backend debería escribir
+
+        let scoreChartInstance = null;
+        let portsChartInstance = null;
+        let pollingInterval = null;
+
+        // ==========================================
+        // 2. RENDER FUNCTIONS
+        // ==========================================
+
+        function renderDashboard(data) {
+            console.log("🎨 Rendering Dashboard with data:", data);
+
+            // 1. Header Info
+            document.getElementById('timestamp').innerText = data.timestamp_human || new Date().toLocaleString();
+            const statusBadge = document.getElementById('ai-status');
+            if (data.ai_status === 'online') {
+                statusBadge.innerHTML = '● IA ACTIVA';
+                statusBadge.classList.remove('offline');
+            } else {
+                statusBadge.innerHTML = '● IA OFFLINE';
+                statusBadge.classList.add('offline');
+            }
+
+            // 2. Score Gauge & Text
+            renderScoreGauge(data.score);
+            const scoreLabel = document.getElementById('score-label');
+            if (data.score < 50) { scoreLabel.innerText = "PELIGRO CRÍTICO"; scoreLabel.style.color = "var(--danger)"; }
+            else if (data.score < 80) { scoreLabel.innerText = "PRECAUCIÓN"; scoreLabel.style.color = "var(--accent)"; }
+            else { scoreLabel.innerText = "SISTEMA SEGURO"; scoreLabel.style.color = "var(--success)"; }
+
+            // 3. Ports Chart
+            renderPortsChart(data.open_ports);
+
+            // 4. AI Analysis
+            document.getElementById('ai-summary').innerText = data.ai_analysis.summary || "No hay análisis disponible.";
+
+            document.getElementById('score-reasoning').innerText = data.ai_analysis.score_reasoning || "No hay análisis disponible.";
+
+            // 5. Risks
+            const risksContainer = document.getElementById('risks-container');
+            risksContainer.innerHTML = '';
+            (data.ai_analysis.critical_risks || []).forEach(risk => {
+                const html = `
+                    <div class="risk-item">
+                        <div>
+                            <span class="risk-title">${risk.title}</span>
+                            <span class="risk-fix">Fix: ${risk.fix}</span>
+                        </div>
+                        <span class="risk-badge">${risk.severity}</span>
+                    </div>
+                `;
+                risksContainer.innerHTML += html;
+            });
+
+            // 6. Recommendations
+            const recContainer = document.getElementById('rec-container');
+            recContainer.innerHTML = '';
+            (data.ai_analysis.recommendations || []).forEach(rec => {
+                recContainer.innerHTML += `<li>${rec}</li>`;
+            });
+
+            // 7. Technical Findings
+            const findingsTable = document.getElementById('findings-table');
+            findingsTable.innerHTML = '';
+            (data.findings || []).slice(0, 10).forEach(f => {
+                let color = f.severity === 'HIGH' ? 'var(--danger)' : '#94a3b8';
+                findingsTable.innerHTML += `
+                    <tr>
+                        <td style="color:#fff">${f.plugin}</td>
+                        <td style="color:${color}; font-weight:bold;">${f.severity}</td>
+                        <td>${f.impact_hint || f.result?.description || 'N/A'}</td>
+                    </tr>`;
+            });
+
+            // Update Icons
+            feather.replace();
+        }
+
+        // --- Chart Helpers ---
+
+        function renderScoreGauge(score) {
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            document.getElementById('score-val').innerText = score;
+            document.getElementById('score-val').style.color = score < 60 ? 'var(--danger)' : (score < 85 ? 'var(--accent)' : 'var(--success)');
+
+            const color = score < 60 ? '#ef4444' : (score < 85 ? '#f59e0b' : '#22c55e');
+
+            if (scoreChartInstance) scoreChartInstance.destroy();
+
+            scoreChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Score', 'Riesgo'],
+                    datasets: [{
+                        data: [score, 100 - score],
+                        backgroundColor: [color, '#334155'],
+                        borderWidth: 0,
+                        cutout: '85%'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+            });
+        }
+
+        function renderPortsChart(ports) {
+            const ctx = document.getElementById('portsChart').getContext('2d');
+            if (portsChartInstance) portsChartInstance.destroy();
+
+            // Critical ports highlight
+            const criticalPorts = [445, 3389, 5432, 22];
+            const bgColors = ports.map(p => criticalPorts.includes(p) ? '#ef4444' : '#f59e0b');
+
+            portsChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ports.map(p => `P${p}`),
+                    datasets: [{
+                        label: 'Puerto',
+                        data: ports.map(() => 10), // Dummy height
+                        backgroundColor: bgColors,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { display: false }, x: { ticks: { color: '#94a3b8' }, grid: { display: false } } }
+                }
+            });
+        }
+
+
+        // ==========================================
+        // 3. POLLER LOGIC (Lifecycle Management)
+        // ==========================================
+
+        async function fetchData() {
+            try {
+                // Intenta buscar el archivo generado por Python
+                const response = await fetch(DATA_SOURCE_URL);
+                if (!response.ok) throw new Error("No file");
+                const jsonData = await response.json();
+                renderDashboard(jsonData);
+            } catch (e) {
+                console.warn("⚠️ Poller: No se encontró 'latest.json' o backend offline. Usando datos en memoria.");
+                // Si falla, no rompemos, simplemente no actualizamos 
+                // (o podríamos forzar el render inicial si es la primera vez)
+            }
+        }
+
+        function startPoller() {
+            // Render inicial inmediato con los datos que pegaste
+            renderDashboard(INITIAL_DATA);
+
+            // Iniciar ciclo
+            console.log("⏱️ Poller iniciado cada", POLLING_INTERVAL_MS, "ms");
+            pollingInterval = setInterval(fetchData, POLLING_INTERVAL_MS);
+        }
+
+        function stopPoller() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                console.log("🛑 Poller detenido y destruido.");
+            }
+        }
+
+        // ==========================================
+        // 4. INIT & CLEANUP
+        // ==========================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            startPoller();
+        });
+
+        // Limpieza automática si se cierra/recarga la pestaña
+        window.addEventListener('beforeunload', () => {
+            stopPoller();
+        });
+
+    </script>
+</body>
+
+</html>

@@ -45,42 +45,7 @@ from plyer import notification
 
 # ...
 
-def generate_dashboard_html(score, report_md, json_path, client_id="LOCAL_PIONEER"):
-    """Genera un Dashboard HTML moderno usando el generador externo y lo guarda."""
-    try:
-        # Determine assets path
-        # Build mode: sys._MEIPASS | Script mode: current dir
-        base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
-        # Prefer app.ico on Windows if available, else logo.png
-        logo_path = os.path.join(base_path, "app.ico")
-        if not os.path.exists(logo_path):
-             logo_path = os.path.join(base_path, "logo.png")
-        
-        # Ensure absolute path for the file protocol
-        logo_path = os.path.abspath(logo_path)
-             
-        # Mock current data for generator
-        current_data = {
-            "score": score,
-            "ai_analysis": report_md
-        }
-        
-        # HTML Content
-        # We pass json_path so generator interprets it as "current" and ensures it is in history
-        html_content = dashboard_generator.get_html_template(current_data, [], logo_path, current_json_path=json_path)
-        
-        # Save HTML
-        reports_dir = get_storage_path("reports")
-        if not os.path.exists(reports_dir): os.makedirs(reports_dir)
-        
-        filename = os.path.join(reports_dir, f"scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html")
-        with open(filename, "w", encoding="utf-8") as f:
-            f.write(html_content)
-            
-        return filename
-    except Exception as e:
-        print(f"Error generando dashboard: {e}")
-        return None
+
 
 def run_security_flow():
     # INICIO
@@ -209,66 +174,71 @@ def run_security_flow():
     bridge = Bridge(data_dir=vault_dir)
     analysis_result = bridge.get_analysis(all_data, security_score)
     
-    report_text = analysis_result.get("markdown", "")
+    ai_json = analysis_result.get("json_report", {})
     ai_status = analysis_result.get("ai_status", "offline") # online, cached, offline
 
     print(f"   ℹ️ Estado AI: {ai_status.upper()}")
     if analysis_result.get("error"):
          print(f"   ⚠️ Error interno Bridge: {analysis_result['error']}", file=sys.stderr)
 
-    # 5.5 Apply HTML Formatting (Backend Side)
-    try:
-        formatter = GaltReportFormatter()
-        report_text = formatter.to_html(report_text)
-        print("DEBUG HTML OUTPUT:", report_text[:100] + "...") # Preview
-    except Exception as e:
-        print(f"⚠️ Error formatting HTML: {e}")
+
 
     try:
         # 6. Save Data & Dashboard
+        # Prepare Open Ports Data (Decoupled UI Logic)
+        open_ports = set()
+        for f in all_data:
+            res = f.get("result", {})
+            plugin = f.get("plugin", "")
+            
+            # Vulns & Processes
+            if plugin in ["sensor_vulnerabilidades", "sensor_procesos"]:
+                data = res.get("data", [])
+                if isinstance(data, list):
+                    for item in data:
+                        if isinstance(item, int): open_ports.add(item)
+                        elif isinstance(item, dict) and "port" in item: open_ports.add(item["port"])
+            
+            # Network Discovery
+            if plugin == "sensor_network_discovery":
+                data = res.get("data", [])
+                if isinstance(data, list):
+                    for host in data:
+                        h_ports = host.get("open_ports", [])
+                        if isinstance(h_ports, list):
+                            for p in h_ports: open_ports.add(p)
+
         final_payload = {
             "client_id": "LOCAL_PIONEER_TEST",
             "timestamp_epoch": int(time.time()),
             "timestamp_human": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "score": security_score,
             "findings": all_data,
-            "ai_analysis_markdown": report_text,
+            "open_ports": list(open_ports), # Explicitly passed for UI
+            "ai_analysis": ai_json, # JSON OBJECT
             "ai_status": ai_status
         }
         
         json_path = save_json_data(final_payload)
         
-        # FILTRO DE ERRORES VISUALES
-        # Convertimos a string por seguridad
-        report_str = str(report_text)
-        if "Error" in report_str or "400" in report_str or "Exception" in report_str:
-            report_text = """
-            <div class="error-box">
-                <h3>⚠️ Análisis de IA No Disponible</h3>
-                <p><b>Modo Local Activo.</b> No se pudo conectar con el cerebro de Galt.ai en la nube.</p>
-                <p style="font-size: 13px; margin-top:10px; opacity:0.8;">
-                    Posibles causas:<br>
-                    1. Falta la API Key en la configuración.<br>
-                    2. Sin conexión a internet.<br>
-                    3. La API Key es inválida o expiró.
-                </p>
-                <p style="font-size: 12px; margin-top:10px;">
-                    <i>El sistema sigue protegiendo tu PC basándose en reglas estáticas.</i>
-                </p>
-            </div>
-            """
-        
-        # GENERATE DASHBOARD
-        # 1. Save Timestamped (History)
-        dashboard_path = generate_dashboard_html(security_score, report_text, json_path)
+        # GENERATE DASHBOARD (Template Injection Mode)
+        dashboard_path = dashboard_generator.generate_dashboard(
+            scan_results=final_payload,
+            ai_analysis_data=ai_json
+        )
         
         # 2. Save/Overwrite "Latest" (For Tray/Auto-Reload)
         if dashboard_path:
             reports_dir = os.path.dirname(dashboard_path)
             latest_path = os.path.join(reports_dir, "dashboard.html")
-            import shutil
-            shutil.copy2(dashboard_path, latest_path)
-            print(f"   ✅ Dashboard principal actualizado: {latest_path}")
+            
+            # Only copy if paths are different [Fix for WinError 32]
+            if os.path.abspath(dashboard_path).lower() != os.path.abspath(latest_path).lower():
+                import shutil
+                shutil.copy2(dashboard_path, latest_path)
+                print(f"   ✅ Dashboard principal actualizado: {latest_path}")
+            else:
+                 print(f"   ✅ Dashboard generado en: {dashboard_path}")
         
         # --- 6. NOTIFICACIÓN FINAL ---
         # --- 6. NOTIFICACIÓN FINAL (NATIVA) ---
