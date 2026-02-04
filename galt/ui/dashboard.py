@@ -64,29 +64,39 @@ def generate_dashboard(scan_results, ai_analysis_data):
     with open(VAULT_FILE, 'w', encoding='utf-8') as f:
         json.dump(full_report, f, indent=4)
 
-    # NEW: Save Timestamped Copy for History
+    # NEW: Save Timestamped Copy for History (JSON + JS for Serverless)
     timestamp_epoch = scan_results.get('timestamp_epoch', 0)
-    report_filename = f"scan_{timestamp_epoch}.json"
-    timestamp_path = os.path.join(os.path.dirname(VAULT_FILE), report_filename)
-
-    with open(timestamp_path, 'w', encoding='utf-8') as f:
+    report_filename_base = f"scan_{timestamp_epoch}"
+    
+    # 1. Save JSON (Archive)
+    json_path = os.path.join(os.path.dirname(VAULT_FILE), report_filename_base + ".json")
+    with open(json_path, 'w', encoding='utf-8') as f:
         json.dump(full_report, f, indent=4)
 
-    # NEW: Update Index
-    update_history_index(full_report, report_filename)
+    # 2. Save JS (Serverless Access) - JSONP Pattern
+    # This calls a global function 'receiveHistoryData' defined in viewer.html
+    js_path = os.path.join(os.path.dirname(VAULT_FILE), report_filename_base + ".js")
+    js_content_history = f"window.receiveHistoryData({json.dumps(full_report, indent=4)});"
+    with open(js_path, 'w', encoding='utf-8') as f:
+        f.write(js_content_history)
+        
+    # [DEV MODE FIX] Mirror History JS
+    dev_vault = os.path.join(os.path.dirname(os.path.dirname(BASE_DIR)), 'vault', 'reports')
+    if os.path.exists(dev_vault) and os.path.abspath(dev_vault) != os.path.abspath(os.path.dirname(js_path)):
+        dev_js_path = os.path.join(dev_vault, report_filename_base + ".js")
+        with open(dev_js_path, 'w', encoding='utf-8') as f:
+            f.write(js_content_history)
+        print(f"✅ [DEV] History Mirror Updated: {dev_js_path}")
+
+    # NEW: Update Index using the JS file for the UI
+    update_history_index(full_report, report_filename_base + ".js")
 
     # 3. Leer el Template HTML
-    if not os.path.exists(TEMPLATE_PATH):
-        print(f"❌ ERROR: No se encontró el template en {TEMPLATE_PATH}")
-        return None
-
-    with open(TEMPLATE_PATH, 'r', encoding='utf-8') as f:
-        html_content = f.read()
-
-    # 4. Inyectar el JSON y el Historial en el HTML
-    json_str = json.dumps(full_report)
+    # 3. Create Serverless JS Loader (Data-as-Script)
+    # This bypasses CORS by allowing the HTML to load this as a standard script.
+    loader_path = os.path.join(os.path.dirname(VAULT_FILE), 'galt_loader.js')
     
-    # Read history for injection
+    # Read history for the loader
     history_path = os.path.join(os.path.dirname(os.path.dirname(BASE_DIR)), 'vault', 'reports', 'history.json')
     history_data = []
     if os.path.exists(history_path):
@@ -94,24 +104,34 @@ def generate_dashboard(scan_results, ai_analysis_data):
             with open(history_path, 'r') as f:
                 history_data = json.load(f)
         except:
-             pass
-    history_str = json.dumps(history_data)
+            history_data = []
 
-    # Replace INITIAL_DATA
-    pattern_data = r"const INITIAL_DATA = \{.*?\};"
-    replacement_data = f"const INITIAL_DATA = {json_str};"
-    final_html = re.sub(pattern_data, replacement_data, html_content, flags=re.DOTALL)
-    
-    # Replace HISTORY_DATA (We need to add a placeholder in the HTML first, or rely on regex if it exists)
-    # Strategy: We will add 'const HISTORY_DATA = [];' to the HTML next.
-    pattern_history = r"const HISTORY_DATA = \[.*?\];"
-    replacement_history = f"const HISTORY_DATA = {history_str};"
-    final_html = re.sub(pattern_history, replacement_history, final_html, flags=re.DOTALL)
-         
-    # 5. Guardar el HTML Final
-    os.makedirs(REPORT_DIR, exist_ok=True)
-    with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
-        f.write(final_html)
+    # Write JS File
+    js_content = f"""
+window.GALT_LATEST_REPORT = {json.dumps(full_report, indent=4)};
+window.GALT_HISTORY_INDEX = {json.dumps(history_data, indent=4)};
+console.log("✅ Galt Data Loaded from JS!");
+"""
+    with open(loader_path, 'w', encoding='utf-8') as f:
+        f.write(js_content)
+    print(f"✅ Data Loader Updated: {loader_path}")
+
+    # [DEV MODE FIX] Also write to local project source if it exists
+    # This allows opening galt/ui/templates/viewer.html locally to work
+    dev_vault = os.path.join(os.path.dirname(os.path.dirname(BASE_DIR)), 'vault', 'reports')
+    if os.path.exists(dev_vault) and os.path.abspath(dev_vault) != os.path.abspath(os.path.dirname(loader_path)):
+        dev_loader_path = os.path.join(dev_vault, 'galt_loader.js')
+        with open(dev_loader_path, 'w', encoding='utf-8') as f:
+            f.write(js_content)
+        print(f"✅ [DEV] Data Loader Mirror Updated: {dev_loader_path}")
+
+    # Return the static template path (Viewer)
+    # The viewer now loads the data dynamically from the JS file we just wrote.
+    if not os.path.exists(TEMPLATE_PATH):
+        print(f"❌ ERROR: No se encontró el template en {TEMPLATE_PATH}")
+        return None
+        
+    return TEMPLATE_PATH
 
     print(f"✅ Reporte generado exitosamente: {OUTPUT_FILE}")
     
