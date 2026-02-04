@@ -430,6 +430,19 @@
             font-size: 1.5rem;
             cursor: pointer;
         }
+
+        /* PRINT OPTIMIZATION (Prevent Card Slicing) */
+        @media print {
+            .card {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+
+            .container {
+                display: block;
+                /* Avoid grid issues in some PDF engines */
+            }
+        }
     </style>
 </head>
 
@@ -658,8 +671,8 @@
                 margin: 0.2, // Small margin
                 filename: `Galt_Report_${new Date().toISOString().slice(0, 10)}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true }, // High res
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+                html2canvas: { scale: 2, useCORS: true, scrollY: 0 }, // High res & top-crop fix
+                jsPDF: { unit: 'in', format: 'a3', orientation: 'landscape' } // A3 for single-page view
             };
 
             html2pdf().set(opt).from(element).save().then(() => {
