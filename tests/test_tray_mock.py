@@ -1,3 +1,4 @@
+import os
 import pytest
 from unittest.mock import MagicMock, patch
 import sys
@@ -38,12 +39,22 @@ def test_tray_actions(mock_tray_libs):
         del sys.modules["galt.ui.tray"]
     from galt.ui import tray
     
-    # Mock open_dashboard
+    # Mock open_dashboard with report fallback to template
+    def exists_side_effect(path):
+        if path.endswith("dashboard.html"):
+            return False
+        if path.endswith("debug_console.html"):
+            return False
+        if path.endswith(os.path.join("templates", "viewer.html")):
+            return True
+        return False
+
     with patch("webbrowser.open") as m_web, \
-         patch("os.path.exists", return_value=True), \
+         patch("os.path.exists", side_effect=exists_side_effect), \
          patch("galt.ui.tray.get_storage_path", return_value="C:\\Mock"):
         tray.open_dashboard()
         m_web.assert_called()
+        assert "viewer.html" in str(m_web.call_args[0][0])
         
     # Mock run_manual_scan
     with patch("threading.Thread") as m_thread, \
