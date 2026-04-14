@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Galt Security</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="/css/styles.css">
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            400: '#FDB022',
+                            500: '#F59E0B',
+                            600: '#D97706',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen text-white">
+
+    <!-- Navigation Bar -->
+    <nav class="bg-slate-800/50 backdrop-blur-xl border-b border-slate-700/50 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+
+                <!-- Logo/Brand -->
+                <div class="flex items-center space-x-3">
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-700 p-2 rounded-lg">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
+                            </path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold">Galt Security</h1>
+                        <p class="text-xs text-slate-400">Portal Alpha</p>
+                    </div>
+                </div>
+
+                <!-- User Info & Logout -->
+                <div class="flex items-center space-x-4">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm text-slate-400">Sesión iniciada como:</p>
+                        <p id="user-email" class="text-sm font-medium text-white">cargando...</p>
+                    </div>
+                    <button id="logout-btn"
+                        class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                            </path>
+                        </svg>
+                        <span class="hidden sm:inline">Cerrar Sesión</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+        <!-- Hero Section -->
+        <div class="text-center mb-16 animate-fade-in">
+            <div class="inline-block mb-6">
+                <span
+                    class="bg-blue-500/10 text-blue-400 px-4 py-2 rounded-full text-sm font-medium border border-blue-500/30">
+                    🎯 Programa Alpha - Acceso Exclusivo
+                </span>
+            </div>
+            <h2
+                class="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-blue-300 to-gold-400 bg-clip-text text-transparent">
+                Bienvenido a Galt
+            </h2>
+            <p class="text-xl text-slate-300 mb-2">Tu CISO Virtual para PYMES</p>
+            <p class="text-slate-400">Detecta amenazas, protege tu red, duerme tranquilo.</p>
+        </div>
+
+        <!-- Download Section -->
+        <div class="max-w-3xl mx-auto mb-16">
+            <div
+                class="bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-700/50 p-8 md:p-12 animate-slide-up">
+
+                <div class="text-center mb-8">
+                    <div class="inline-block bg-gradient-to-r from-gold-500 to-gold-600 p-4 rounded-2xl mb-4 shadow-lg">
+                        <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3 class="text-3xl font-bold mb-2">Descarga el Agente Galt</h3>
+                    <p class="text-slate-400">Versión 0.1 - Alpha Release</p>
+                </div>
+
+                <!-- Download Button -->
+                <div class="mb-6">
+                    <button id="download-btn"
+                        class="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white font-bold text-lg py-4 px-8 rounded-xl shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center space-x-3">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10">
+                            </path>
+                        </svg>
+                        <span>⬇️ Descargar Galt v0.1</span>
+                    </button>
+                </div>
+
+                <!-- Error Message -->
+                <div id="download-error" class="hidden bg-red-500/10 border border-red-500/50 rounded-xl p-4 mb-4">
+                    <p class="text-red-400 text-sm text-center"></p>
+                </div>
+
+                <!-- Download Info -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center text-sm">
+                    <div class="bg-slate-900/50 rounded-xl p-4">
+                        <p class="text-slate-400 mb-1">Tamaño</p>
+                        <p class="text-white font-semibold">~15 MB</p>
+                    </div>
+                    <div class="bg-slate-900/50 rounded-xl p-4">
+                        <p class="text-slate-400 mb-1">Plataforma</p>
+                        <p class="text-white font-semibold">Windows/Linux</p>
+                    </div>
+                    <div class="bg-slate-900/50 rounded-xl p-4">
+                        <p class="text-slate-400 mb-1">Última Actualización</p>
+                        <p class="text-white font-semibold">Feb 2026</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Installation Instructions -->
+        <div class="max-w-4xl mx-auto">
+            <div
+                class="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-700/50 p-8 animate-fade-in">
+
+                <h3 class="text-2xl font-bold mb-6 flex items-center">
+                    <svg class="w-7 h-7 mr-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    Instrucciones de Instalación
+                </h3>
+
+                <div class="prose prose-invert max-w-none">
+
+                    <!-- Windows Installation -->
+                    <div class="mb-8">
+                        <h4 class="text-xl font-semibold text-gold-400 mb-3 flex items-center">
+                            <span class="bg-gold-500/20 rounded-lg p-2 mr-2">🪟</span>
+                            Windows
+                        </h4>
+                        <ol class="space-y-2 text-slate-300 list-decimal list-inside">
+                            <li>Descarga el archivo <code
+                                    class="bg-slate-900 px-2 py-1 rounded text-gold-400">galt_latest.zip</code></li>
+                            <li>Extrae el contenido en una carpeta de tu elección (ej: <code
+                                    class="bg-slate-900 px-2 py-1 rounded">C:\Galt</code>)</li>
+                            <li>Ejecuta <code class="bg-slate-900 px-2 py-1 rounded text-blue-400">galt.exe</code> como
+                                Administrador</li>
+                            <li>Sigue el asistente de configuración inicial</li>
+                            <li>Galt comenzará a monitorear tu red automáticamente</li>
+                        </ol>
+                    </div>
+
+                    <!-- Linux Installation -->
+                    <div class="mb-8">
+                        <h4 class="text-xl font-semibold text-gold-400 mb-3 flex items-center">
+                            <span class="bg-gold-500/20 rounded-lg p-2 mr-2">🐧</span>
+                            Linux
+                        </h4>
+                        <ol class="space-y-2 text-slate-300 list-decimal list-inside">
+                            <li>Descarga y extrae el archivo ZIP</li>
+                            <li>Abre una terminal en la carpeta extraída</li>
+                            <li>Ejecuta el script de instalación:
+                                <pre
+                                    class="bg-slate-900 rounded-lg p-3 mt-2 overflow-x-auto"><code class="text-green-400">sudo bash install.sh</code></pre>
+                            </li>
+                            <li>Inicia el servicio:
+                                <pre
+                                    class="bg-slate-900 rounded-lg p-3 mt-2 overflow-x-auto"><code class="text-green-400">sudo systemctl start galt</code></pre>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <!-- Requirements -->
+                    <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-6 mb-8">
+                        <h4 class="text-lg font-semibold text-blue-400 mb-3 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            Requisitos del Sistema
+                        </h4>
+                        <ul class="space-y-1 text-slate-300 list-disc list-inside">
+                            <li>Python 3.9+ (incluido en el paquete para Windows)</li>
+                            <li>Permisos de administrador/root</li>
+                            <li>Conexión a internet para activación</li>
+                            <li>API Key de Gemini (se proporciona en configuración inicial)</li>
+                        </ul>
+                    </div>
+
+                    <!-- Support -->
+                    <div class="bg-slate-900/50 rounded-xl p-6">
+                        <h4 class="text-lg font-semibold text-white mb-3 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-gold-400" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z">
+                                </path>
+                            </svg>
+                            ¿Necesitas Ayuda?
+                        </h4>
+                        <p class="text-slate-400">
+                            Durante la fase Alpha, el soporte es limitado. Para reportar bugs o solicitar ayuda,
+                            contacta al administrador del programa directamente.
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-700/50 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="text-center text-slate-500 text-sm">
+                <p>&copy; 2026 Galt Security. Todos los derechos reservados.</p>
+                <p class="mt-1">Portal Alpha v0.1 - Uso Interno Exclusivo</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Dashboard Script -->
+    <script type="module">
+        import { requireAuth, logout } from './js/auth.js';
+        import { handleDownload, displayUserInfo } from './js/dashboard.js';
+
+        // Protect this page - redirect if not authenticated
+        const user = await requireAuth();
+        if (!user) {
+            // requireAuth already redirected to login
+            throw new Error('Not authenticated');
+        }
+
+        // Display user information
+        displayUserInfo();
+
+        // Setup download button
+        const downloadBtn = document.getElementById('download-btn');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', handleDownload);
+        }
+
+        // Setup logout button
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async () => {
+                if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                    await logout();
+                }
+            });
+        }
+    </script>
+
+</body>
+
+</html>
