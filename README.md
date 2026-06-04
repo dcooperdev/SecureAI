@@ -7,6 +7,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey?style=for-the-badge)](https://github.com/dcooperdev/SecureAI)
 [![License](https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge)](https://github.com/dcooperdev/SecureAI)
+
 Galt is a next-generation **HIDS (Host-Based Intrusion Detection System)** designed to protect endpoints through a hybrid architecture of local sensors, OS log analysis, and an AI brain powered by Google Gemini.  
 It acts as a **Virtual CISO** — monitoring, analyzing, and educating users about their real-time security posture.
 
