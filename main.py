@@ -92,28 +92,25 @@ def dispatch():
 
     # --- MODO PRINCIPAL (Sentinel) ---
     
-    # 1. VALIDACIÓN / ONBOARDING (Consola Visible si no es daemon)
-    # Si somos daemon, asumimos que el padre ya hizo el onboarding o fallará silenciosamente (lo cual es correcto)
+    # 1. ONBOARDING — show GUI dialog or CLI fallback depending on context.
+    # Daemons skip this: the parent process must have already completed setup.
     if not get_api_key():
         if is_daemon:
-            logging.error("Daemon iniciado sin API Key. Abortando.")
+            logging.error("Daemon started without API Key. Aborting.")
             sys.exit(1)
-            
-        print("\n⚠️  GALT.AI: Configuración Inicial Requerida")
-        # El usuario interactúa aquí con la ventana negra
-        if not onboarding.prompt_for_key_console():
-            print("❌ Cancelado por el usuario.")
+
+        if not onboarding.prompt_for_key():
+            logging.error("Onboarding cancelled by user.")
             sys.exit(1)
-            
-    # Validar que la llave sea funcional (sanity check)
+
+    # Sanity-check the stored key is still valid
     current_key = get_api_key()
     if current_key and not onboarding.validate_key(current_key):
-         if is_daemon:
-             logging.error("Daemon: API Key inválida.")
-             sys.exit(1)
-             
-         print("⚠️  La llave guardada parece inválida. Re-iniciando onboarding...")
-         if not onboarding.prompt_for_key_console():
+        if is_daemon:
+            logging.error("Daemon: stored API Key is invalid.")
+            sys.exit(1)
+
+        if not onboarding.prompt_for_key():
             sys.exit(1)
 
     # 2. TRANSICIÓN A TRAY (Ocultar Consola o Relanzar)

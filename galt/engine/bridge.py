@@ -5,7 +5,7 @@ import logging
 from google import genai
 from google.api_core import exceptions
 from dotenv import load_dotenv
-from galt.core.config import LLM_MODEL
+from galt.core.config import get_llm_model
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -163,7 +163,7 @@ class Bridge:
         content = f"DATOS TÉCNICOS:\n{json.dumps(findings, indent=2)}"
         
         response = self.client.models.generate_content(
-            model=LLM_MODEL,
+            model=get_llm_model(),
             contents=system_prompt + "\n\n" + content
         )
         

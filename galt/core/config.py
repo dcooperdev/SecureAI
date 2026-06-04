@@ -3,8 +3,30 @@ import sys
 import platform
 import logging
 
-# Constante de Modelo AI (Quota: 14.4K RPD)
-LLM_MODEL = "gemma-3-27b-it"
+# Default model — can be overridden by GALT_LLM_MODEL in the env file.
+# gemini-3.5-flash: latest stable Flash generation — best JSON instruction-following
+# and security domain knowledge. Free tier included.
+_DEFAULT_LLM_MODEL = "gemini-3.5-flash"
+
+def get_llm_model() -> str:
+    """Returns the configured LLM model, falling back to the default."""
+    return os.getenv("GALT_LLM_MODEL", _DEFAULT_LLM_MODEL)
+
+def save_llm_model(model: str) -> None:
+    """Persists the chosen LLM model to the env file alongside the API key."""
+    env_path = os.path.join(get_storage_path(), ".env")
+    # Read existing lines (keeps API key and other vars intact)
+    lines = []
+    if os.path.exists(env_path):
+        with open(env_path, "r") as f:
+            lines = [l for l in f.readlines() if not l.startswith("GALT_LLM_MODEL=")]
+    lines.append(f"GALT_LLM_MODEL={model}\n")
+    try:
+        with open(env_path, "w") as f:
+            f.writelines(lines)
+    except Exception as e:
+        logging.error(f"Could not write model to .env: {e}")
+    os.environ["GALT_LLM_MODEL"] = model
 
 def setup_logging():
     """Configura logging silencioso hacia STDERR."""
