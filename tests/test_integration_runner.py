@@ -2,48 +2,48 @@ import pytest
 from unittest.mock import MagicMock, patch
 from galt.engine import orchestrator as runner
 
-# FIX: Apuntamos a 'generate_dashboard' que es el nombre real en tu código
+# FIX: Point to 'generate_dashboard' which is the real name in your code
 @patch('galt.engine.orchestrator.dashboard_generator.generate_dashboard')
 @patch('galt.engine.orchestrator.status_manager.update_status')
 @patch('subprocess.Popen')
 @patch('builtins.open')
 def test_run_security_flow_structure(mock_open, mock_subprocess, mock_update_status, mock_generate_dashboard):
     """
-    Test Integration: verifica el flujo principal mockeando dependencias externas.
-    Asegura que el sistema reporta SCANNING al inicio y IDLE/ERROR al final.
+    Test Integration: verifies the main flow mocking external dependencies.
+    Ensures that the system reports SCANNING at start and IDLE/ERROR at the end.
     """
-    # 1. Configurar Mocks
-    # Simulamos que el generador devuelve una ruta de archivo
+    # 1. Configure Mocks
+    # Simulate that generator returns a file path
     mock_generate_dashboard.return_value = "c:\\mock\\report.html"
     
-    # Simulamos que los sensores (subprocess) devuelven JSON vacío "[]"
+    # Simulate that sensors (subprocess) return empty JSON "[]"
     process_mock = MagicMock()
     process_mock.communicate.return_value = ('[]', '')
     mock_subprocess.return_value = process_mock
 
-    # Simulamos los argumentos de línea de comandos para que no pida input manual
+    # Simulate command line arguments so it does not ask for manual input
     with patch('argparse.ArgumentParser.parse_args') as mock_args:
         args = MagicMock()
-        args.auto = True # Modo automático para saltar preguntas
+        args.auto = True # Automatic mode to skip questions
         mock_args.return_value = args
 
-        # 2. EJECUTAR EL RUNNER
-        print("DEBUG: Iniciando runner.run_security_flow() bajo test...")
+        # 2. RUN RUNNER
+        print("DEBUG: Starting runner.run_security_flow() under test...")
         runner.run_security_flow()
 
-        # 3. VERIFICACIONES
-        # Extraemos todos los estados que se enviaron a update_status
-        # call_args_list devuelve una lista de llamadas. args[0] es el estado.
+        # 3. VERIFICATIONS
+        # Extract all states sent to update_status
+        # call_args_list returns a list of calls. args[0] is the state.
         states_called = []
         if mock_update_status.call_count > 0:
             states_called = [call.args[0] for call in mock_update_status.call_args_list]
         
-        print(f"DEBUG: Estados reportados por el runner: {states_called}")
+        print(f"DEBUG: States reported by the runner: {states_called}")
 
-        # Validaciones
-        # Verificamos que al menos se haya intentado poner en SCANNING
-        assert "SCANNING" in states_called, f"ERROR: No se reportó estado SCANNING. Estados: {states_called}"
+        # Validations
+        # Verify that at least it tried to set to SCANNING
+        assert "SCANNING" in states_called, f"ERROR: SCANNING state not reported. States: {states_called}"
         
-        # Verificamos que terminó (IDLE o ERROR son aceptables como fin)
+        # Verify that it finished (IDLE or ERROR are acceptable as end)
         finished_correctly = "IDLE" in states_called or "ERROR" in states_called
-        assert finished_correctly, f"ERROR: El flujo no terminó en reposo. Estados: {states_called}"
+        assert finished_correctly, f"ERROR: Flow did not finish in resting state. States: {states_called}"

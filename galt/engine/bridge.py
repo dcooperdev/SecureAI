@@ -7,7 +7,7 @@ from google.api_core import exceptions
 from dotenv import load_dotenv
 from galt.core.config import get_llm_model
 
-# Configurar logging
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ class Bridge:
     def __init__(self, data_dir=None):
         load_dotenv()
         self.api_key = os.getenv("GOOGLE_API_KEY")
-        # Por defecto usar vault/ o galt/data/
+        # By default use vault/ or galt/data/
         self.data_dir = data_dir or os.path.join(os.getcwd(), "vault")
         if not os.path.exists(self.data_dir):
             os.makedirs(self.data_dir)
@@ -26,19 +26,19 @@ class Bridge:
             try:
                 self.client = genai.Client(api_key=self.api_key)
             except Exception as e:
-                logger.error(f"Error inicializando Gemini Client: {e}")
+                logger.error(f"Error initializing Gemini Client: {e}")
 
     def _clean_for_comparison(self, data):
         """
-        Limpia los datos para la comparación (Diff), eliminando timestamps
-        y campos que cambian en cada ejecución sin afectar la seguridad.
+        Cleans the data for comparison (Diff), removing timestamps
+        and fields that change on each run without affecting security.
         """
         if isinstance(data, list):
             return [self._clean_for_comparison(item) for item in data]
         elif isinstance(data, dict):
             new_dict = {}
             for k, v in data.items():
-                # Ignorar campos de tiempo o IDs únicos efímeros
+                # Ignore time fields or ephemeral unique IDs
                 if k in ["timestamp", "time", "date", "scan_id", "epoch", "ui_date_short", "ui_date_full", "pid"]:
                     continue
                 new_dict[k] = self._clean_for_comparison(v)
@@ -52,7 +52,7 @@ class Bridge:
                 with open(self.state_file, 'r', encoding='utf-8') as f:
                     return json.load(f)
             except Exception as e:
-                logger.error(f"Error cargando estado anterior: {e}")
+                logger.error(f"Error loading previous state: {e}")
         return None
 
     def _save_state(self, findings, score, narrative):
@@ -66,19 +66,19 @@ class Bridge:
             with open(self.state_file, 'w', encoding='utf-8') as f:
                 json.dump(state, f, ensure_ascii=False, indent=2)
         except Exception as e:
-            logger.error(f"Error guardando estado: {e}")
+            logger.error(f"Error saving state: {e}")
 
     def get_analysis(self, current_findings, current_score):
         """
-        Flujo principal:
-        1. Carga estado anterior.
-        2. Compara (Diff).
-        3. Decide si llamar a AI o usar caché.
-        4. Retorna resultado + metadata de estado.
+        Main flow:
+        1. Load previous state.
+        2. Compare (Diff).
+        3. Decide whether to call AI or use cache.
+        4. Return result + state metadata.
         """
         last_state = self._load_state()
         
-        # --- 1. Lógica de Comparación (Diff) ---
+        # --- 1. Comparison Logic (Diff) ---
         has_changed = True
         improvement_msg = ""
         
@@ -88,23 +88,23 @@ class Bridge:
             last_score = last_state.get("score", 0)
             clean_last = self._clean_for_comparison(last_state.get("findings", []))
             
-            # Comparar exactitud de datos y score
-            # Convertimos a string json ordenado para comparar estructuras complejas
+            # Compare data exactness and score
+            # Convert to sorted json string to compare complex structures
             current_str = json.dumps(clean_current, sort_keys=True)
             last_str = json.dumps(clean_last, sort_keys=True)
             
             if current_str == last_str and current_score == last_score:
                 has_changed = False
             
-            # Detectar mejora
+            # Detect improvement
             if current_score > last_score:
-                improvement_msg = f"El usuario mejoró su seguridad (Score subió de {last_score} a {current_score}). Identifica qué cambió y felicítalo explicando el beneficio."
+                improvement_msg = f"The user improved their security (Score rose from {last_score} to {current_score}). Identify what changed, congratulate them, and explain the benefit."
 
         # --- 2. Decision Making ---
         
-        # CASO A: Cache Hit
+        # CASE A: Cache Hit
         if not has_changed and last_state and last_state.get("narrative"):
-            logger.info("Smart Cache: Sin cambios detectados. Reutilizando narrativa.")
+            logger.info("Smart Cache: No changes detected. Reusing narrative.")
             return {
                 "json_report": last_state["narrative"], # Renamed from markdown to json_report
                 "ai_status": "cached",
@@ -112,20 +112,20 @@ class Bridge:
                 "used_cache": True
             }
 
-        # CASO B: Cambios o Cache Miss -> Llamar a IA
-        logger.info(f"Cambios detectados. Solicitando análisis a Gemini...")
+        # CASE B: Changes or Cache Miss -> Call AI
+        logger.info(f"Changes detected. Requesting analysis from Gemini...")
         
-        prompt_context = "Analiza estos hallazgos de seguridad."
+        prompt_context = "Analyze these security findings."
         if improvement_msg:
-            prompt_context += f"\n\nNOTA DE CONTEXTO: {improvement_msg}"
+            prompt_context += f"\n\nCONTEXT NOTE: {improvement_msg}"
 
         try:
             if not self.client:
-                raise ValueError("Cliente Gemini no inicializado (Falta API Key)")
+                raise ValueError("Gemini client not initialized (Missing API Key)")
 
             response_json_obj = self._call_gemini(clean_current, current_score, prompt_context)
             
-            # Guardar nuevo estado (narrative is now a dict)
+            # Save new state (narrative is now a dict)
             self._save_state(current_findings, current_score, response_json_obj)
             
             return {
@@ -136,8 +136,8 @@ class Bridge:
             }
 
         except Exception as e:
-            logger.error(f"Fallo en llamada a IA: {e}")
-            # CASO C: Fallback / Error
+            logger.error(f"AI call failed: {e}")
+            # CASE C: Fallback / Error
             fallback_json = self._get_fallback_narrative(current_score, e)
             return {
                 "json_report": fallback_json,
@@ -178,9 +178,9 @@ class Bridge:
 
     def _get_fallback_narrative(self, score, error=None):
         """
-        Genera un JSON offline.
+        Generates offline JSON.
         """
-        logger.warning(f"Generando JSON offline. Razón: {error}")
+        logger.warning(f"Generating offline JSON. Reason: {error}")
         
         status = "Secure"
         if score < 60: status = "Critical"
@@ -194,7 +194,7 @@ class Bridge:
         }
 
 if __name__ == "__main__":
-    # Test rápido
+    # Quick test
     b = Bridge()
     print("Testing Bridge...")
     res = b.get_analysis([{"test": 1}], 80)

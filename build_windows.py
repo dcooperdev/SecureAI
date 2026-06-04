@@ -15,7 +15,7 @@ if os.path.exists("build"): shutil.rmtree("build")
 sep = ";" if os.name == 'nt' else ":"
 
 args = [
-    'main.py',                              # <--- NUEVO MAIN
+    'main.py',                              # <--- NEW MAIN
     '--name=GaltAI_Agent',
     '--onefile',
     '--noconfirm',
@@ -39,7 +39,7 @@ args = [
     '--hidden-import=certifi',
     '--additional-hooks-dir=hooks',
     '--runtime-hook=runtime_hook.py',     # <--- FORCE RUNTIME IMPORT
-    # Incluimos todo el código fuente como data por seguridad
+    # Include all source code as data for security
     f'--add-data=.env.example{sep}.',
     f'--add-data=app.ico{sep}.',
     f'--add-data=logo.png{sep}.',
@@ -49,6 +49,6 @@ args = [
 
 if os.path.exists("app.ico"): args.append('--icon=app.ico')
 
-print("🚀 Compilando Galt.ai Hybrid Monolith...", file=sys.stderr)
+print("🚀 Building Galt.ai Hybrid Monolith...", file=sys.stderr)
 PyInstaller.__main__.run(args)
-print("✅ Compilación exitosa.", file=sys.stderr)
+print("✅ Compilation successful.", file=sys.stderr)

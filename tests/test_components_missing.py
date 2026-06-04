@@ -46,7 +46,7 @@ def test_scheduler_test_mode():
              pass
          
          output = "".join([c.args[0] for c in m_stdout.write.call_args_list if c.args])
-         assert "MODO PRUEBAS" in output
+         assert "TEST MODE" in output
 
 def test_scheduler_expired_license():
     # Test interval 0 -> Exit
@@ -57,7 +57,7 @@ def test_scheduler_expired_license():
          
          # Should print error and return immediately (no sleep, no loop)
          output = "".join([c.args[0] for c in m_stdout.write.call_args_list if c.args])
-         assert "falta de licencia" in output
+         assert "lack of active license" in output
 
 # --- ONBOARDING TESTS ---
 def test_onboarding_console_success():

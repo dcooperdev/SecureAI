@@ -3,13 +3,13 @@ import json
 import webbrowser
 import re
 
-# Configuración de rutas
+# Path configuration
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_PATH = os.path.join(BASE_DIR, 'templates', 'viewer.html')
 # Helper to maintain compatibility if imports exist elsewhere
 from galt.core.config import get_storage_path
 
-# Configuración de rutas
+# Path configuration
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_PATH = os.path.join(BASE_DIR, 'templates', 'viewer.html')
 REPORT_DIR = get_storage_path("reports")
@@ -46,9 +46,9 @@ def update_history_index(new_report_data, filename):
 
 def generate_dashboard(scan_results, ai_analysis_data):
     """
-    Toma los datos, lee el template viewer.html, inyecta el JSON y guarda el reporte final.
+    Takes the data, reads the template viewer.html, injects the JSON and saves the final report.
     """
-    # 1. Consolidar el Reporte Maestro
+    # 1. Consolidate Master Report
     full_report = {
         "timestamp_human": scan_results.get('timestamp_human', 'N/A'),
         "score": scan_results.get('score', 0),
@@ -59,7 +59,7 @@ def generate_dashboard(scan_results, ai_analysis_data):
         "findings": scan_results.get('findings', [])
     }
 
-    # 2. Guardar JSON Puro (para historial/vault)
+    # 2. Save Pure JSON (for history/vault)
     os.makedirs(os.path.dirname(VAULT_FILE), exist_ok=True)
     with open(VAULT_FILE, 'w', encoding='utf-8') as f:
         json.dump(full_report, f, indent=4)
@@ -91,7 +91,7 @@ def generate_dashboard(scan_results, ai_analysis_data):
     # NEW: Update Index using the JS file for the UI
     update_history_index(full_report, report_filename_base + ".js")
 
-    # 3. Leer el Template HTML
+    # 3. Read HTML Template
     # 3. Create Serverless JS Loader (Data-as-Script)
     # This bypasses CORS by allowing the HTML to load this as a standard script.
     loader_path = os.path.join(os.path.dirname(VAULT_FILE), 'galt_loader.js')
@@ -128,12 +128,12 @@ console.log("✅ Galt Data Loaded from JS!");
     # Return the static template path (Viewer)
     # The viewer now loads the data dynamically from the JS file we just wrote.
     if not os.path.exists(TEMPLATE_PATH):
-        print(f"❌ ERROR: No se encontró el template en {TEMPLATE_PATH}")
+        print(f"❌ ERROR: Template not found at {TEMPLATE_PATH}")
         return None
         
     return TEMPLATE_PATH
 
 if __name__ == "__main__":
-    # Prueba rápida
+    # Quick test
     dummy_data = {"score": 99, "ai_analysis": {"summary": "Test"}}
     generate_dashboard(dummy_data, dummy_data['ai_analysis'])

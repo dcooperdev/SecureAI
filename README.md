@@ -5,9 +5,8 @@
 [![Release](https://img.shields.io/github/v/release/dcooperdev/SecureAI?style=for-the-badge&logo=github)](https://github.com/dcooperdev/SecureAI/releases)
 [![CI/CD](https://img.shields.io/github/actions/workflow/status/dcooperdev/SecureAI/release.yml?style=for-the-badge&logo=githubactions&label=CI%2FCD)](https://github.com/dcooperdev/SecureAI/actions)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python)](https://www.python.org/)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey?style=for-the-badge)]()
-[![License](https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge)](license.txt)
-
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey?style=for-the-badge)](https://github.com/dcooperdev/SecureAI)
+[![License](https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge)](https://github.com/dcooperdev/SecureAI)
 Galt is a next-generation **HIDS (Host-Based Intrusion Detection System)** designed to protect endpoints through a hybrid architecture of local sensors, OS log analysis, and an AI brain powered by Google Gemini.  
 It acts as a **Virtual CISO** — monitoring, analyzing, and educating users about their real-time security posture.
 
@@ -187,10 +186,9 @@ The CI/CD pipeline automatically compiles and packages binaries for all platform
 
 ---
 
-## 🌐 Language / Idioma
+## 🌐 Language
 
-> 🇬🇧 **English** — You're reading it!  
-> 🇦🇷 **Español** — Documentación interna y comentarios de código en español para el equipo de desarrollo.
+> 🇬🇧 **English** — You're reading it!
 
 ---
 

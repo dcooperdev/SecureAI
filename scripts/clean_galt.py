@@ -44,7 +44,7 @@ EXCLUDE_DIRS = [
 PLUGIN_PATTERN = re.compile(r"(sensor_|plugin_).*\.py$")
 ASSET_EXTENSIONS = {'.png', '.ico', '.jpg', '.svg', '.css', '.html', '.js'}
 
-# Mapping de librerías a nombres de import (Basic)
+# Library mapping to import names (Basic)
 REQ_MAPPING = {
     "Pillow": "PIL",
     "google-genai": "google.genai",
@@ -124,7 +124,7 @@ def scan_string_references(target_filename, search_dirs):
 # --- MAIN LOGIC ---
 
 def run_audit():
-    print(f"🔎 Iniciando Auditoría Forense de Galt Project en: {ROOT_DIR}\n")
+    print(f"🔎 Starting Galt Project Forensic Audit in: {ROOT_DIR}\n")
     
     # 1. Discover All Files
     all_py_files = set()
@@ -239,22 +239,22 @@ def run_audit():
     # --- REPORTING ---
     
     print("\n" + "="*60)
-    print("📊 REPORTE DE INTROSPECCIÓN")
+    print("📊 INTROSPECTION REPORT")
     print("="*60)
     
     # Red: Brain Dead
     if dead_code or dead_assets:
-        print("\n🔴 MUERTE CEREBRAL (CONFIRMADO PARA BORRAR)")
+        print("\n🔴 BRAIN DEAD (CONFIRMED TO DELETE)")
         for f in dead_code:
-            print(f"   [CÓDIGO] {os.path.relpath(f, ROOT_DIR)}")
+            print(f"   [CODE] {os.path.relpath(f, ROOT_DIR)}")
         for f in dead_assets:
             print(f"   [ASSET]  {os.path.relpath(f, ROOT_DIR)}")
     else:
-        print("\n🔴 MUERTE CEREBRAL: Ninguno encontrado. ¡Código limpio!")
+        print("\n🔴 BRAIN DEAD: None found. Clean code!")
 
     # Orange: Suspects
     if suspect_code:
-        print("\n🟠 SOSPECHOSOS (REQUIEREN REVISIÓN - Tienen referencias de string)")
+        print("\n🟠 SUSPECTS (REQUIRE REVIEW - Have string references)")
         for f in suspect_code:
             print(f"   {os.path.relpath(f, ROOT_DIR)}")
 
@@ -294,13 +294,13 @@ def run_audit():
         if not found:
             unused_reqs.append(r)
 
-    print("\n🟡 DEUDA TÉCNICA (Requirements.txt vs Imports)")
+    print("\n🟡 TECHNICAL DEBT (Requirements.txt vs Imports)")
     if unused_reqs:
-        print("   Librerías en requirements.txt que no parecen importarse:")
+        print("   Libraries in requirements.txt that do not seem to be imported:")
         for r in unused_reqs:
             print(f"   - {r}")
     else:
-        print("   Todas las dependencias parecen estar en uso.")
+        print("   All dependencies seem to be in use.")
 
 if __name__ == '__main__':
     run_audit()

@@ -23,36 +23,36 @@ import subprocess
 
 def hide_console(is_daemon=False):
     """
-    Oculta la consola.
-    - Windows: Usa API nativa (ShowWindow).
-    - Posix (Linux/Mac): Relanza el proceso en background (start_new_session) si no es daemon.
+    Hides the console.
+    - Windows: Uses native API (ShowWindow).
+    - Posix (Linux/Mac): Relaunches the process in the background (start_new_session) if it is not a daemon.
     """
     if os.name == 'nt':
         try:
             hwnd = ctypes.windll.kernel32.GetConsoleWindow()
             if hwnd != 0:
                 ctypes.windll.user32.ShowWindow(hwnd, 0) # 0 = SW_HIDE
-                logging.info("Consola ocultada (Windows Mode).")
+                logging.info("Console hidden (Windows Mode).")
         except Exception as e:
-            logging.error(f"No se pudo ocultar consola: {e}")
+            logging.error(f"Could not hide console: {e}")
     else:
         # Posix Strategy: Detach & Relaunch
         if is_daemon:
-            logging.info("Ejecutando en modo Daemon (Background).")
+            logging.info("Running in Daemon mode (Background).")
             return
 
-        logging.info("Transicionando a segundo plano (Posix)...")
-        # Preparamos el comando para relanzarnos a nosotros mismos
+        logging.info("Transitioning to background (Posix)...")
+        # Prepare command to relaunch ourselves
         cmd = [sys.executable]
         
-        # Si corremos como script .py (no congelado), necesitamos pasar el script
+        # If running as .py script (not frozen), we need to pass the script
         if not getattr(sys, 'frozen', False):
-            # sys.argv[0] suele ser main.py
+            # sys.argv[0] is usually main.py
             cmd.append(sys.argv[0])
             
         cmd.append("--daemon")
         
-        # Lanzar proceso hijo desconectado
+        # Launch disconnected child process
         subprocess.Popen(
             cmd, 
             start_new_session=True, 
@@ -72,7 +72,7 @@ def dispatch():
         is_daemon = True
         sys.argv.remove("--daemon")
 
-    # Si es un subproceso específico (ej: runner ejecutado por el scheduler), no hacemos nada de GUI
+    # If it is a specific subprocess (e.g. runner executed by scheduler), we do not run GUI
     if len(sys.argv) > 1 and sys.argv[1] != "sentinel":
         mode = sys.argv[1]
         
@@ -87,10 +87,10 @@ def dispatch():
         elif mode == "sensor_vulnerabilidades": sensor_vulnerabilidades.main()
         elif mode == "sensor_network_discovery": sensor_network_discovery.main()
         else:
-            logging.error(f"Modo desconocido: {mode}")
+            logging.error(f"Unknown mode: {mode}")
         return
 
-    # --- MODO PRINCIPAL (Sentinel) ---
+    # --- MAIN MODE (Sentinel) ---
     
     # 1. ONBOARDING — show GUI dialog or CLI fallback depending on context.
     # Daemons skip this: the parent process must have already completed setup.
@@ -113,21 +113,21 @@ def dispatch():
         if not onboarding.prompt_for_key():
             sys.exit(1)
 
-    # 2. TRANSICIÓN A TRAY (Ocultar Consola o Relanzar)
+    # 2. TRAY TRANSITION (Hide Console or Relaunch)
     if not is_daemon:
-        print("✅ Sistema configurado. Iniciando modo vigilancia...")
+        print("✅ System configured. Starting surveillance mode...")
     
     hide_console(is_daemon) 
 
-    # 3. INICIAR MOTORES
-    logging.info("Arrancando Sentinel en background...")
+    # 3. START ENGINES
+    logging.info("Starting Sentinel in background...")
     
-    # Hilo del Sentinel (Lógica de seguridad en background)
+    # Sentinel Thread (Background security logic)
     sentinel_thread = threading.Thread(target=sentinel.main_loop, daemon=True)
     sentinel_thread.start()
 
-    # Hilo Principal (UI del Tray - Bloqueante)
-    # Pystray necesita correr en el hilo principal
+    # Main Thread (Tray UI - Blocking)
+    # Pystray needs to run in the main thread
     tray_manager.run_tray()
 
 if __name__ == "__main__":

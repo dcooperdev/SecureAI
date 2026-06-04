@@ -140,10 +140,10 @@ def test_run_flow_no_drift(mock_deps):
         with patch("sys.stdout") as m_stdout:
             orchestrator.run_security_flow()
             
-            # Verify stdout contains "Postura estable"
+            # Verify stdout contains "Stable posture"
             # Accumulate output
             output = "".join([c.args[0] for c in m_stdout.write.call_args_list if c.args])
-            assert "Postura estable" in output
+            assert "Stable posture" in output
 
 def test_run_flow_error_handling(mock_deps):
     # Simulate critical bridge error
@@ -157,7 +157,7 @@ def test_run_flow_error_handling(mock_deps):
         
         # Check stderr for warning
         err_output = "".join([c.args[0] for c in m_stderr.write.call_args_list if c.args])
-        assert "Error interno Bridge" in err_output
+        assert "Internal Bridge Error" in err_output
         
         # Flow should still complete (dashboard gen, etc.) despite AI error
         mock_deps["dashboard"].generate_dashboard.assert_called()
