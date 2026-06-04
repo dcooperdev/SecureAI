@@ -133,15 +133,6 @@ console.log("✅ Galt Data Loaded from JS!");
         
     return TEMPLATE_PATH
 
-    print(f"✅ Reporte generado exitosamente: {OUTPUT_FILE}")
-    
-    # 6. Abrir en Navegador (opcional, el orquestador o tray suele manejar esto, pero el usuario pidió abrirlo aquí)
-    # Sin embargo, el orquestador espera un retorno de ruta.
-    # El código solicitado incluye webbrowser.open, pero para integrarse mejor con el flujo existente
-    # que usa el tray y el orquestador, devolveré la ruta también.
-    
-    return OUTPUT_FILE
-
 if __name__ == "__main__":
     # Prueba rápida
     dummy_data = {"score": 99, "ai_analysis": {"summary": "Test"}}

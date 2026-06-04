@@ -2,10 +2,9 @@ import subprocess
 import json
 import os
 import sys
-# import webbrowser (Removed)
-# from plyer import notification (Removed)
 import argparse
 import time
+import hashlib
 
 # Force UTF-8 encoding for stdout on Windows to handle emojis
 if sys.stdout.encoding.lower() != 'utf-8':
@@ -25,11 +24,19 @@ from galt.engine.bridge import Bridge
 
 load_dotenv()
 
-# --- CONFIGURACIÓN Y UTILIDADES ---
-
-# --- CONFIGURACIÓN Y UTILIDADES ---
+# --- UTILITIES AND CONFIGS ---
 
 api_key = get_api_key()
+
+def get_client_id() -> str:
+    """
+    Generates a stable, anonymous machine ID derived from the hostname and
+    current username. The result is a deterministic short hash that persists
+    across restarts without storing any sensitive data.
+    """
+    import platform
+    raw = f"{platform.node()}:{os.getenv('USERNAME', os.getenv('USER', 'unknown'))}"
+    return "GALT-" + hashlib.sha256(raw.encode()).hexdigest()[:12].upper()
 
 def save_json_data(data):
     """Guarda la telemetría estructurada en JSON para futura migración a Firebase."""
@@ -41,10 +48,6 @@ def save_json_data(data):
     return filename
 
 from galt.ui import dashboard as dashboard_generator
-from plyer import notification
-
-# ...
-
 
 
 def run_security_flow():
@@ -228,7 +231,7 @@ def run_security_flow():
                             for p in h_ports: open_ports.add(p)
 
         final_payload = {
-            "client_id": "LOCAL_PIONEER_TEST",
+            "client_id": get_client_id(),
             "timestamp_epoch": int(time.time()),
             "timestamp_human": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "score": security_score,
